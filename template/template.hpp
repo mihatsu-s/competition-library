@@ -1,5 +1,7 @@
 #include <bits/stdc++.h>
 
+#include "../util/hash.hpp"
+
 template <typename T>
 using V = std::vector<T>;
 template <typename T>
