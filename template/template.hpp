@@ -28,8 +28,8 @@ using unpriority_queue = std::priority_queue<T, V<T>, std::greater<T>>;
 #define __PRIMITIVE_ITR(v, ...) for (auto&& __VA_ARGS__ : (v))
 #define b2e(x) (x).begin(), (x).end()
 #define e2b(x) (x).rbegin(), (x).rend()
-#define updatemax(t, v) ((t) = std::max((t), (v)))
-#define updatemin(t, v) ((t) = std::min((t), (v)))
+#define chmax(t, v) ((t) = std::max((t), (v)))
+#define chmin(t, v) ((t) = std::min((t), (v)))
 
 const char lf = '\n';
 
