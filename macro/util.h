@@ -1,3 +1,6 @@
+#ifndef MIHATSU_MACRO_UTIL_H
+#define MIHATSU_MACRO_UTIL_H 1
+
 #define __PRIMITIVE_CONCAT(a, b) a##b
 #define ___CONCAT(a, b) __PRIMITIVE_CONCAT(a, b)
 
@@ -19,3 +22,5 @@
 #define __REWIND9(a, b, c, d, e, f, g, h, z) z, a, b, c, d, e, f, g, h
 #define __REWIND10(a, b, c, d, e, f, g, h, i, z) z, a, b, c, d, e, f, g, h, i
 #define REWIND(...) NARGS_SELECTOR(__REWIND, __VA_ARGS__)
+
+#endif

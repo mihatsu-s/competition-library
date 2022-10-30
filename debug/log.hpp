@@ -1,13 +1,19 @@
+#ifndef MIHATSU_DEBUG_LOG_HPP
+#define MIHATSU_DEBUG_LOG_HPP 1
+
 #include <iostream>
 
-#define debug_log(...) __debug_log(#__VA_ARGS__, __VA_ARGS__)
+#define debug_log(...) mihatsu::__internal::_debug_log(#__VA_ARGS__, __VA_ARGS__)
 
-void __debug_log(const char* str) {
+namespace mihatsu {
+namespace _internal {
+
+void _debug_log(const char* str) {
     std::clog << std::endl;
 }
 
 template <typename Head, typename... Tail>
-void __debug_log(const char* str, Head&& head, Tail&&... tail) {
+void _debug_log(const char* str, Head&& head, Tail&&... tail) {
 #ifndef DEBUG
     return;
 #endif
@@ -24,5 +30,10 @@ void __debug_log(const char* str, Head&& head, Tail&&... tail) {
     }
     if (*str != 0) ++str;
     std::clog << " = " << head << " \t";
-    __debug_log(str, std::forward<Tail>(tail)...);
+    _debug_log(str, std::forward<Tail>(tail)...);
 }
+
+}  // namespace _internal
+}  // namespace mihatsu
+
+#endif
