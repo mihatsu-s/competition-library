@@ -54,7 +54,7 @@ using unpriority_queue = std::priority_queue<T, V<T>, std::greater<T>>;
 
 }  // namespace mihatsu
 
-#include "../debug/log.hpp"
+#include "../util/debug_print.hpp"
 #include "../util/hash.hpp"
 
 using namespace std;
