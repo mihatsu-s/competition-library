@@ -1,15 +1,19 @@
 #ifndef MIHATSU_UTIL_HASH_HPP
 #define MIHATSU_UTIL_HASH_HPP 1
 
+#include <functional>
+#include <tuple>
+#include <utility>
+
 namespace mihatsu {
 namespace _internal {
 
-size_t hash_sequence() {
+std::size_t hash_sequence() {
     return 0;
 }
 
 template <typename Head, typename... Tail>
-size_t hash_sequence(const Head& head, const Tail&... tail) {
+std::size_t hash_sequence(const Head& head, const Tail&... tail) {
     return std::hash<Head>()(head) ^ hash_sequence(tail...);
 }
 
@@ -21,7 +25,7 @@ namespace std {
 template <typename T1, typename T2>
 class hash<std::pair<T1, T2>> {
    public:
-    size_t operator()(const std::pair<T1, T2>& x) const {
+    std::size_t operator()(const std::pair<T1, T2>& x) const {
         return mihatsu::_internal::hash_sequence(x.first, x.second);
     }
 };
@@ -29,7 +33,7 @@ class hash<std::pair<T1, T2>> {
 template <typename... T>
 class hash<std::tuple<T...>> {
    public:
-    size_t operator()(const std::tuple<T...>& x) const {
+    std::size_t operator()(const std::tuple<T...>& x) const {
         return std::apply(mihatsu::_internal::hash_sequence<T...>, x);
     }
 };
