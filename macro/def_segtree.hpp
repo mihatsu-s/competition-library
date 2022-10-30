@@ -4,12 +4,12 @@
 #include <atcoder/lazysegtree>
 #include <atcoder/segtree>
 
-#define DEF_SEGTREE(name, T, op, e)                         \
-    namespace __##name {                                    \
-        inline T _op(T a, T b) { return (op); }             \
-        inline T _e() { return (e); }                       \
-        using type = typename atcoder::segtree<T, _op, _e>; \
-    }                                                       \
+#define DEF_SEGTREE(name, T, op, e)                           \
+    namespace __##name {                                      \
+        inline T _op(const T& a, const T& b) { return (op); } \
+        inline T _e() { return (e); }                         \
+        using type = typename atcoder::segtree<T, _op, _e>;   \
+    }                                                         \
     using name = __##name::type;
 
 #define DEF_LAZYSEGTREE(name, T, op, e, F, mapping, composition)                               \
@@ -23,11 +23,11 @@
             : _T(value, left, right, right - left) {}                                          \
         inline _T() : _T((e), -1, -1, 0) {}                                                    \
     };                                                                                         \
-    inline _T _op(_T _a, _T _b) {                                                              \
+    inline _T _op(const _T& _a, const _T& _b) {                                                \
         const auto &a = _a.value, &b = _b.value;                                               \
-        int newLeft = (_a.size > 0 ? _a : _b).left;                                            \
-        int newRight = (_b.size > 0 ? _b : _a).right;                                          \
-        int newSize = _a.size + _b.size;                                                       \
+        const int newLeft = (_a.size > 0 ? _a : _b).left;                                      \
+        const int newRight = (_b.size > 0 ? _b : _a).right;                                    \
+        const int newSize = _a.size + _b.size;                                                 \
         return _T((op), newLeft, newRight, newSize);                                           \
     }                                                                                          \
     inline _T _e() { return _T(); }                                                            \
@@ -38,14 +38,14 @@
             : value(value), enabled(enabled) {}                                                \
         inline _F() : _F(F(), false) {}                                                        \
     };                                                                                         \
-    inline _T _mapping(_F _f, _T _a) {                                                         \
+    inline _T _mapping(const _F& _f, const _T& _a) {                                           \
         if (!_f.enabled) return _a;                                                            \
         const auto& f = _f.value;                                                              \
         const auto& a = _a.value;                                                              \
-        int l = _a.left, r = _a.right, s = _a.size;                                            \
+        const int l = _a.left, r = _a.right, s = _a.size;                                      \
         return _T((mapping), _a.left, _a.right, _a.size);                                      \
     }                                                                                          \
-    inline _F _composition(_F _f, _F _g) {                                                     \
+    inline _F _composition(const _F& _f, const _F& _g) {                                       \
         if (!_f.enabled) return _g;                                                            \
         if (!_g.enabled) return _f;                                                            \
         const auto &f = _f.value, &g = _g.value;                                               \
