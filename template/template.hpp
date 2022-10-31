@@ -13,8 +13,6 @@
 #define __PRIMITIVE_ITR(v, ...) for (auto&& __VA_ARGS__ : (v))
 #define b2e(x) (x).begin(), (x).end()
 #define e2b(x) (x).rbegin(), (x).rend()
-#define chmax(t, v) ((t) = std::max((t), static_cast<std::remove_reference<decltype(t)>::type>(v)))
-#define chmin(t, v) ((t) = std::min((t), static_cast<std::remove_reference<decltype(t)>::type>(v)))
 
 template <typename T>
 using V = std::vector<T>;
@@ -51,6 +49,15 @@ struct Init {
 
 template <typename T>
 using unpriority_queue = std::priority_queue<T, V<T>, std::greater<T>>;
+
+template <typename T, typename U>
+inline T& chmax(T& x, const U& y) {
+    return (x < y) ? (x = y) : x;
+}
+template <typename T, typename U>
+inline T& chmin(T& x, const U& y) {
+    return (x > y) ? (x = y) : x;
+}
 
 }  // namespace mihatsu
 
