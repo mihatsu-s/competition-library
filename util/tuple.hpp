@@ -67,7 +67,7 @@ inline auto operator/=(T& lhs, const U& rhs) {
     return lhs;
 }
 template <typename T, std::enable_if_t<mihatsu::_internal::is_pairlike_v<T>>* = nullptr>
-std::istream& operator>>(std::istream& is, T& pair) {
+inline std::istream& operator>>(std::istream& is, T& pair) {
     return is >> pair.first >> pair.second;
 }
 
