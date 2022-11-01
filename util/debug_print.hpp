@@ -9,9 +9,6 @@
 #include <utility>
 #include "type_traits.hpp"
 
-template <typename _CharT, typename _Traits, typename T>
-std::basic_ostream<_CharT, _Traits>& operator<<(std::basic_ostream<_CharT, _Traits>&, const T&);
-
 namespace mihatsu {
 namespace _internal {
 
@@ -50,28 +47,29 @@ struct DebugPrinter {
 
     template <typename T>
     inline void print_value(const T& x) {
-        if constexpr (is_maplike_v<T>) {
-            os << "{";
-            bool is_first = true;
-            for (const auto& [key, value] : x) {
-                os << (is_first ? "" : " ");
-                is_first = false;
-                print_value(key);
-                os << ":";
-                print_value(value);
+        if constexpr (is_maplike_v<T> || is_setlike_v<T> || is_container_v<T>) {
+            if constexpr (is_maplike_v<T> || is_setlike_v<T>) {
+                os << "{";
+            } else {
+                os << "[";
             }
-            os << "}";
-        } else if constexpr (is_container_v<T>) {
-            os << "[";
             bool is_first = true;
             for (const auto& value : x) {
                 os << (is_first ? "" : " ");
                 is_first = false;
-                print_value(value);
+                if constexpr (is_maplike_v<T>) {
+                    print_value(value.first);
+                    os << ":";
+                    print_value(value.second);
+                } else {
+                    print_value(value);
+                }
             }
-            os << "]";
-        } else if constexpr (is_atcoder_modint_v<T>) {
-            os << x.val();
+            if constexpr (is_maplike_v<T> || is_setlike_v<T>) {
+                os << "}";
+            } else {
+                os << "]";
+            }
         } else {
             os << x;
         }
