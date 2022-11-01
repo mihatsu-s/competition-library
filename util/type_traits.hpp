@@ -28,6 +28,13 @@ struct is_container<T, std::void_t<decltype(std::begin(std::declval<T>()))>> : s
 template <typename T>
 inline constexpr bool is_container_v = is_container<T>::value;
 
+template <typename T, typename = void>
+struct is_pairlike : std::false_type {};
+template <typename T>
+struct is_pairlike<T, std::void_t<typename T::first_type, typename T::second_type>> : std::true_type {};
+template <typename T>
+constexpr bool is_pairlike_v = is_pairlike<T>::value;
+
 }  // namespace _internal
 }  // namespace mihatsu
 
