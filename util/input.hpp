@@ -40,12 +40,6 @@ struct class_with_input : public T {
         : T{val} {}
     inline constexpr class_with_input(T&& val) noexcept
         : T{val} {}
-    inline constexpr operator T() const noexcept {
-        return *this;
-    }
-    inline constexpr operator T&() noexcept {
-        return *this;
-    }
 };
 
 }  // namespace mihatsu
