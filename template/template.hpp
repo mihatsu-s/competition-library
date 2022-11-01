@@ -58,6 +58,7 @@ inline T& chmin(T& x, U&& y) {
 
 #include "../util/debug_print.hpp"
 #include "../util/tuple.hpp"
+#include "../util/input.hpp"
 
 template <typename T>
 using V = std::vector<T>;
@@ -71,10 +72,19 @@ using ll = long long;
 using ull = unsigned long long;
 using pll = std::pair<ll, ll>;
 using tll = std::tuple<ll, ll, ll>;
-using vll = V<ll>;
+using vll = std::vector<ll>;
 using dd = long double;
-const ll inf = std::numeric_limits<ll>::max() / 4;
-const char lf = '\n';
+using lli = mihatsu::arithmetic_with_input<ll>;
+using ulli = mihatsu::arithmetic_with_input<ull>;
+using plli = std::pair<lli, lli>;
+using tlli = std::tuple<lli, lli, lli>;
+using vlli = std::vector<lli>;
+using chari = mihatsu::arithmetic_with_input<char>;
+using inti = mihatsu::arithmetic_with_input<int>;
+using ddi = mihatsu::arithmetic_with_input<dd>;
+using stringi = mihatsu::class_with_input<std::string>;
+inline const ll inf = std::numeric_limits<ll>::max() / 4;
+inline const char lf = '\n';
 
 #include "../macro/util.h"
 #define rep(...) NARGS_SELECTOR(__REP, __VA_ARGS__)
