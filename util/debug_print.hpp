@@ -47,7 +47,9 @@ struct DebugPrinter {
 
     template <typename T>
     inline void print_value(const T& x) {
-        if constexpr (is_maplike_v<T> || is_setlike_v<T> || is_container_v<T>) {
+        if constexpr (std::is_convertible_v<T*, std::string*>) {
+            os << x;
+        } else if constexpr (is_maplike_v<T> || is_setlike_v<T> || is_container_v<T>) {
             if constexpr (is_maplike_v<T> || is_setlike_v<T>) {
                 os << "{";
             } else {
@@ -70,19 +72,18 @@ struct DebugPrinter {
             } else {
                 os << "]";
             }
+        } else if constexpr (is_pairlike_v<T>) {
+            os << "(";
+            print_value(x.first);
+            os << ",";
+            print_value(x.second);
+            os << ")";
         } else {
             os << x;
         }
     }
-    inline void print_value(const std::string& str) {
-        os << str;
-    }
     inline void print_value(const char* str) {
         os << str;
-    }
-    template <typename T1, typename T2>
-    inline void print_value(const std::pair<T1, T2>& pair) {
-        print_value(std::tuple<T1, T2>(pair.first, pair.second));
     }
     template <typename... T>
     inline void print_value(const std::tuple<T...>& tuple) {
