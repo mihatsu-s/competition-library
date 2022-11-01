@@ -1,7 +1,22 @@
 #ifndef MIHATSU_TEMPLATE_HPP
 #define MIHATSU_TEMPLATE_HPP 1
 
+#if __has_include(<bits/stdc++.h>)
 #include <bits/stdc++.h>
+#else
+#include <algorithm>
+#include <iostream>
+#include <limits>
+#include <map>
+#include <queue>
+#include <set>
+#include <string>
+#include <tuple>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
+#endif
 
 #include "../macro/util.h"
 #define rep(...) NARGS_SELECTOR(__REP, __VA_ARGS__)
@@ -29,7 +44,6 @@ using tll = std::tuple<ll, ll, ll>;
 using vll = V<ll>;
 using dd = long double;
 const ll inf = std::numeric_limits<ll>::max() / 4;
-
 const char lf = '\n';
 
 namespace mihatsu {
@@ -62,7 +76,7 @@ inline T& chmin(T& x, const U& y) {
 }  // namespace mihatsu
 
 #include "../util/debug_print.hpp"
-#include "../util/hash.hpp"
+#include "../util/tuple.hpp"
 
 using namespace std;
 using namespace mihatsu;
