@@ -7,6 +7,11 @@
 namespace mihatsu {
 namespace _internal {
 
+template <typename T>
+constexpr inline bool false_v = false;
+template <typename T>
+constexpr inline bool true_v = true;
+
 template <typename, typename = void>
 struct is_maplike : std::false_type {};
 template <typename T>

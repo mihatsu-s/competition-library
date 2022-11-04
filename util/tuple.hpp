@@ -66,10 +66,6 @@ constexpr inline auto operator/=(T& lhs, const U& rhs) {
     lhs.second /= rhs;
     return lhs;
 }
-template <typename T, std::enable_if_t<mihatsu::_internal::is_pairlike_v<T>>* = nullptr>
-inline std::istream& operator>>(std::istream& is, T& pair) {
-    return is >> pair.first >> pair.second;
-}
 
 // TODO: overload operators for tuple
 
