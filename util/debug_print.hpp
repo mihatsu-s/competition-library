@@ -12,6 +12,7 @@
 namespace mihatsu {
 namespace _internal {
 
+template <std::nullptr_t = nullptr>
 struct DebugPrinter {
     std::ostream& os = std::cerr;
     const std::string sep = "  ";
@@ -90,7 +91,7 @@ struct DebugPrinter {
         print_tuple_impl<0>(tuple);
     }
     template <int index, typename... T>
-    void print_tuple_impl(const std::tuple<T...>& tuple) {
+    inline void print_tuple_impl(const std::tuple<T...>& tuple) {
         if constexpr (index == 0) os << "(";
         if constexpr (index < sizeof...(T)) {
             if constexpr (index > 0) os << ",";

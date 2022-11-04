@@ -19,14 +19,14 @@ struct arithmetic_with_input {
     inline arithmetic_with_input() {
         std::cin >> val;
     }
-    inline constexpr arithmetic_with_input(const T& val) noexcept
+    constexpr inline arithmetic_with_input(const T& val) noexcept
         : val(val) {}
-    inline constexpr arithmetic_with_input(T&& val) noexcept
+    constexpr inline arithmetic_with_input(T&& val) noexcept
         : val(val) {}
-    inline constexpr operator T() const noexcept {
+    constexpr inline operator T() const noexcept {
         return val;
     }
-    inline constexpr operator T&() noexcept {
+    constexpr inline operator T&() noexcept {
         return val;
     }
 };
@@ -36,9 +36,9 @@ struct class_with_input : public T {
     inline class_with_input() {
         std::cin >> *this;
     }
-    inline constexpr class_with_input(const T& val) noexcept
+    constexpr inline class_with_input(const T& val) noexcept
         : T{val} {}
-    inline constexpr class_with_input(T&& val) noexcept
+    constexpr inline class_with_input(T&& val) noexcept
         : T{val} {}
 };
 

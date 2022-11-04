@@ -5,6 +5,7 @@
 #include <bits/stdc++.h>
 #else
 #include <algorithm>
+#include <cmath>
 #include <functional>
 #include <iostream>
 #include <limits>
@@ -22,6 +23,7 @@
 namespace mihatsu {
 
 namespace _internal {
+template <std::nullptr_t = nullptr>
 struct Init {
     Init() {
 #ifndef DEBUG
@@ -31,7 +33,8 @@ struct Init {
 #endif
         std::cout.precision(16);
     }
-} init;
+};
+Init init;
 }  // namespace _internal
 
 template <typename T>
@@ -57,8 +60,8 @@ inline T& chmin(T& x, U&& y) {
 }  // namespace mihatsu
 
 #include "../util/debug_print.hpp"
-#include "../util/tuple.hpp"
 #include "../util/input.hpp"
+#include "../util/tuple.hpp"
 
 template <typename T>
 using V = std::vector<T>;
@@ -83,8 +86,9 @@ using chari = mihatsu::arithmetic_with_input<char>;
 using inti = mihatsu::arithmetic_with_input<int>;
 using ddi = mihatsu::arithmetic_with_input<dd>;
 using stringi = mihatsu::class_with_input<std::string>;
-inline const ll inf = std::numeric_limits<ll>::max() / 4;
-inline const char lf = '\n';
+constexpr inline ll inf = std::numeric_limits<ll>::max() / 4;
+constexpr inline char lf = '\n';
+const inline long double pi = acos(-1.0L);
 
 #include "../macro/util.h"
 #define rep(...) NARGS_SELECTOR(__REP, __VA_ARGS__)

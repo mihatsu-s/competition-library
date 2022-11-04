@@ -19,49 +19,49 @@ namespace _internal {
 namespace std {
 
 template <typename T, typename U, std::enable_if_t<mihatsu::_internal::is_pairlike_v<T> && mihatsu::_internal::is_pairlike_v<U>>* = nullptr>
-inline auto operator+(const T& lhs, const U& rhs) {
+constexpr inline auto operator+(const T& lhs, const U& rhs) {
     return std::pair(lhs.first + rhs.first, lhs.second + rhs.second);
 }
 template <typename T, typename U, std::enable_if_t<mihatsu::_internal::is_pairlike_v<T> && mihatsu::_internal::is_pairlike_v<U>>* = nullptr>
-inline auto operator-(const T& lhs, const U& rhs) {
+constexpr inline auto operator-(const T& lhs, const U& rhs) {
     return std::pair(lhs.first - rhs.first, lhs.second - rhs.second);
 }
 template <typename T, std::enable_if_t<mihatsu::_internal::is_pairlike_v<T>>* = nullptr>
-inline auto operator-(const T& pair) {
+constexpr inline auto operator-(const T& pair) {
     return std::pair(-pair.first, -pair.second);
 }
 template <typename T, typename U, std::enable_if_t<mihatsu::_internal::is_pairlike_v<T>>* = nullptr>
-inline auto operator*(const T& lhs, const U& rhs) {
+constexpr inline auto operator*(const T& lhs, const U& rhs) {
     return std::pair(lhs.first * rhs, lhs.second * rhs);
 }
 template <typename T, typename U, std::enable_if_t<mihatsu::_internal::is_pairlike_v<U>>* = nullptr>
-inline auto operator*(const T& lhs, const U& rhs) {
+constexpr inline auto operator*(const T& lhs, const U& rhs) {
     return std::pair(lhs * rhs.first, lhs * rhs.second);
 }
 template <typename T, typename U, std::enable_if_t<mihatsu::_internal::is_pairlike_v<T>>* = nullptr>
-inline auto operator/(const T& lhs, const U& rhs) {
+constexpr inline auto operator/(const T& lhs, const U& rhs) {
     return std::pair(lhs.first / rhs, lhs.second / rhs);
 }
 template <typename T, typename U, std::enable_if_t<mihatsu::_internal::is_pairlike_v<T> && mihatsu::_internal::is_pairlike_v<U>>* = nullptr>
-inline auto operator+=(T& lhs, const U& rhs) {
+constexpr inline auto operator+=(T& lhs, const U& rhs) {
     lhs.first += rhs.first;
     lhs.second += rhs.second;
     return lhs;
 }
 template <typename T, typename U, std::enable_if_t<mihatsu::_internal::is_pairlike_v<T> && mihatsu::_internal::is_pairlike_v<U>>* = nullptr>
-inline auto operator-=(T& lhs, const U& rhs) {
+constexpr inline auto operator-=(T& lhs, const U& rhs) {
     lhs.first -= rhs.first;
     lhs.second -= rhs.second;
     return lhs;
 }
 template <typename T, typename U, std::enable_if_t<mihatsu::_internal::is_pairlike_v<T>>* = nullptr>
-inline auto operator*=(T& lhs, const U& rhs) {
+constexpr inline auto operator*=(T& lhs, const U& rhs) {
     lhs.first *= rhs;
     lhs.second *= rhs;
     return lhs;
 }
 template <typename T, typename U, std::enable_if_t<mihatsu::_internal::is_pairlike_v<T>>* = nullptr>
-inline auto operator/=(T& lhs, const U& rhs) {
+constexpr inline auto operator/=(T& lhs, const U& rhs) {
     lhs.first /= rhs;
     lhs.second /= rhs;
     return lhs;
