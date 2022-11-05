@@ -1,5 +1,4 @@
-#ifndef MIHATSU_TEMPLATE_HPP
-#define MIHATSU_TEMPLATE_HPP
+#pragma once
 
 #if __has_include(<bits/stdc++.h>)
 #include <bits/stdc++.h>
@@ -103,5 +102,3 @@ const inline long double pi = acos(-1.0L);
 
 using namespace std;
 using namespace mihatsu;
-
-#endif

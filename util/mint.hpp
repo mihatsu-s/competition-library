@@ -1,5 +1,4 @@
-#ifndef MIHATSU_UTIL_MINT_HPP
-#define MIHATSU_UTIL_MINT_HPP
+#pragma once
 
 #include <atcoder/modint>
 #include <iostream>
@@ -31,5 +30,3 @@ inline std::ostream& operator<<(std::ostream& s, const atcoder::dynamic_modint<i
 }
 
 }  // namespace std
-
-#endif

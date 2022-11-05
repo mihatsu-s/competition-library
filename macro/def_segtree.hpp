@@ -1,5 +1,4 @@
-#ifndef MIHATSU_MACRO_DEF_SEGTREE_HPP
-#define MIHATSU_MACRO_DEF_SEGTREE_HPP
+#pragma once
 
 #include <atcoder/lazysegtree>
 #include <atcoder/segtree>
@@ -65,5 +64,3 @@
         return type(std::move(_v));                                                            \
     }                                                                                          \
     }
-
-#endif

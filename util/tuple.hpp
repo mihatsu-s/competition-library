@@ -1,5 +1,4 @@
-#ifndef MIHATSU_UTIL_TUPLE_HPP
-#define MIHATSU_UTIL_TUPLE_HPP
+#pragma once
 
 #include <functional>
 #include <iostream>
@@ -105,5 +104,3 @@ class hash<std::tuple<T...>> {
 };
 
 }  // namespace std
-
-#endif

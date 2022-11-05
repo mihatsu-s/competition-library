@@ -1,5 +1,4 @@
-#ifndef MIHATSU_UTIL_TYPE_TRAITS_HPP
-#define MIHATSU_UTIL_TYPE_TRAITS_HPP
+#pragma once
 
 #include <iterator>
 #include <type_traits>
@@ -42,5 +41,3 @@ constexpr inline bool is_pairlike_v = is_pairlike<T>::value;
 
 }  // namespace _internal
 }  // namespace mihatsu
-
-#endif

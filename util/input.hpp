@@ -1,5 +1,4 @@
-#ifndef MIHATSU_UTIL_INPUT_HPP
-#define MIHATSU_UTIL_INPUT_HPP
+#pragma once
 
 #include <array>
 #include <iostream>
@@ -84,5 +83,3 @@ inline istream& operator>>(istream& is, vector<T, Allocator>& vector) {
 }
 
 }  // namespace std
-
-#endif

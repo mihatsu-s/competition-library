@@ -1,5 +1,4 @@
-#ifndef MIHATSU_UTIL_DEBUG_PRINT_HPP
-#define MIHATSU_UTIL_DEBUG_PRINT_HPP
+#pragma once
 
 #ifdef DEBUG
 
@@ -110,6 +109,4 @@ struct DebugPrinter {
 
 #else
 #define debug_print(...)
-#endif
-
 #endif
