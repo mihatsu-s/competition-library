@@ -1,5 +1,5 @@
 #ifndef MIHATSU_UTIL_MINT_HPP
-#define MIHATSU_UTIL_MINT_HPP 1
+#define MIHATSU_UTIL_MINT_HPP
 
 #include <atcoder/modint>
 #include <iostream>

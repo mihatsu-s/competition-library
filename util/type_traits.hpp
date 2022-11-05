@@ -1,5 +1,5 @@
 #ifndef MIHATSU_UTIL_TYPE_TRAITS_HPP
-#define MIHATSU_UTIL_TYPE_TRAITS_HPP 1
+#define MIHATSU_UTIL_TYPE_TRAITS_HPP
 
 #include <iterator>
 #include <type_traits>

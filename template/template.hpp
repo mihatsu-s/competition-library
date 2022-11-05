@@ -1,5 +1,5 @@
 #ifndef MIHATSU_TEMPLATE_HPP
-#define MIHATSU_TEMPLATE_HPP 1
+#define MIHATSU_TEMPLATE_HPP
 
 #if __has_include(<bits/stdc++.h>)
 #include <bits/stdc++.h>

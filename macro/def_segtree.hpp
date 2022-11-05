@@ -1,5 +1,5 @@
 #ifndef MIHATSU_MACRO_DEF_SEGTREE_HPP
-#define MIHATSU_MACRO_DEF_SEGTREE_HPP 1
+#define MIHATSU_MACRO_DEF_SEGTREE_HPP
 
 #include <atcoder/lazysegtree>
 #include <atcoder/segtree>

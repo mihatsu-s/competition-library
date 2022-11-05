@@ -1,5 +1,5 @@
 #ifndef MIHATSU_UTIL_TUPLE_HPP
-#define MIHATSU_UTIL_TUPLE_HPP 1
+#define MIHATSU_UTIL_TUPLE_HPP
 
 #include <functional>
 #include <iostream>

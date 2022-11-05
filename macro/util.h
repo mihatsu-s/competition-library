@@ -1,5 +1,5 @@
 #ifndef MIHATSU_MACRO_UTIL_H
-#define MIHATSU_MACRO_UTIL_H 1
+#define MIHATSU_MACRO_UTIL_H
 
 #define __PRIMITIVE_CONCAT(a, b) a##b
 #define ___CONCAT(a, b) __PRIMITIVE_CONCAT(a, b)

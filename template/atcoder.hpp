@@ -1,5 +1,5 @@
 #ifndef MIHATSU_TEMPLATE_ATCODER_HPP
-#define MIHATSU_TEMPLATE_ATCODER_HPP 1
+#define MIHATSU_TEMPLATE_ATCODER_HPP
 
 #include "template.hpp"
 #include <atcoder/all>
