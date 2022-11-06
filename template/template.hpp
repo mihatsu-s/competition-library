@@ -58,6 +58,7 @@ inline T& chmin(T& x, U&& y) {
 
 }  // namespace mihatsu
 
+#include "../util/b2e.hpp"
 #include "../util/debug_print.hpp"
 #include "../util/input.hpp"
 #include "../util/tuple.hpp"
@@ -97,8 +98,6 @@ const inline long double pi = acos(-1.0L);
 #define itr(...) _MIHATSU_ITR(MIHATSU_REWIND(__VA_ARGS__))
 #define _MIHATSU_ITR(...) _MIHATSU_PRIMITIVE_ITR(__VA_ARGS__)
 #define _MIHATSU_PRIMITIVE_ITR(v, ...) for (auto&& __VA_ARGS__ : (v))
-#define b2e(x) (x).begin(), (x).end()
-#define e2b(x) (x).rbegin(), (x).rend()
 
 using namespace std;
 using namespace mihatsu;
