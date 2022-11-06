@@ -3,27 +3,31 @@
 #include <atcoder/all>
 #include "template.hpp"
 
+namespace std {
+
 template <int m, void* _>
-inline std::istream& std::operator>>(std::istream& s, atcoder::static_modint<m, _>& x) {
+inline istream& operator>>(istream& s, atcoder::static_modint<m, _>& x) {
     long long v;
     s >> v;
     x = v;
     return s;
 }
 template <int m, void* _>
-inline std::ostream& std::operator<<(std::ostream& s, const atcoder::static_modint<m, _>& x) {
+inline ostream& operator<<(ostream& s, const atcoder::static_modint<m, _>& x) {
     return s << x.val();
 }
 template <int id>
-inline std::istream& std::operator>>(std::istream& s, atcoder::dynamic_modint<id>& x) {
+inline istream& operator>>(istream& s, atcoder::dynamic_modint<id>& x) {
     long long v;
     s >> v;
     x = v;
     return s;
 }
 template <int id>
-inline std::ostream& std::operator<<(std::ostream& s, const atcoder::dynamic_modint<id>& x) {
+inline ostream& operator<<(ostream& s, const atcoder::dynamic_modint<id>& x) {
     return s << x.val();
+}
+
 }
 
 #define DEF_SEGTREE(name, T, op, e)                         \

@@ -3,8 +3,7 @@
 #include <iterator>
 #include <type_traits>
 
-namespace mihatsu {
-namespace _internal {
+namespace mihatsu::_internal {
 
 template <typename T>
 constexpr inline bool false_v = false;
@@ -39,5 +38,4 @@ struct is_pairlike<T, std::void_t<typename T::first_type, typename T::second_typ
 template <typename T>
 constexpr inline bool is_pairlike_v = is_pairlike<T>::value;
 
-}  // namespace _internal
-}  // namespace mihatsu
+}  // namespace mihatsu::_internal
