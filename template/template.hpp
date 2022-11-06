@@ -33,7 +33,7 @@ struct Init {
         std::cout.precision(16);
     }
 };
-Init init;
+inline Init init;
 }  // namespace _internal
 
 template <typename T>
