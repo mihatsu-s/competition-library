@@ -89,14 +89,14 @@ constexpr inline ll inf = std::numeric_limits<ll>::max() / 4;
 constexpr inline char lf = '\n';
 const inline long double pi = acos(-1.0L);
 
-#include "../macro/util.h"
-#define rep(...) NARGS_SELECTOR(__REP, __VA_ARGS__)
-#define __REP2(i, n) for (long long i = 0ll, __##i##__end = (n); i < __##i##__end; ++i)
-#define __REP3(i, a, b) for (long long i = (a), __##i##__end = (b); i < __##i##__end; ++i)
-#define __REP4(i, a, b, c) for (long long i = (a), __##i##__end = (b), __##i##__step = (c); __##i##__step > 0ll ? i < __##i##__end : i > __##i##__end; i += __##i##__step)
-#define itr(...) __ITR(REWIND(__VA_ARGS__))
-#define __ITR(...) __PRIMITIVE_ITR(__VA_ARGS__)
-#define __PRIMITIVE_ITR(v, ...) for (auto&& __VA_ARGS__ : (v))
+#include "../util/macro.h"
+#define rep(...) MIHATSU_NARGS_SELECTOR(_MIHATSU_REP, __VA_ARGS__)
+#define _MIHATSU_REP2(i, n) for (long long i = 0ll, __##i##__end = (n); i < __##i##__end; ++i)
+#define _MIHATSU_REP3(i, a, b) for (long long i = (a), __##i##__end = (b); i < __##i##__end; ++i)
+#define _MIHATSU_REP4(i, a, b, c) for (long long i = (a), __##i##__end = (b), __##i##__step = (c); __##i##__step > 0ll ? i < __##i##__end : i > __##i##__end; i += __##i##__step)
+#define itr(...) _MIHATSU_ITR(MIHATSU_REWIND(__VA_ARGS__))
+#define _MIHATSU_ITR(...) _MIHATSU_PRIMITIVE_ITR(__VA_ARGS__)
+#define _MIHATSU_PRIMITIVE_ITR(v, ...) for (auto&& __VA_ARGS__ : (v))
 #define b2e(x) (x).begin(), (x).end()
 #define e2b(x) (x).rbegin(), (x).rend()
 

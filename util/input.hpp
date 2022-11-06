@@ -64,22 +64,18 @@ inline std::istream& input_tuple_impl(std::istream& is, std::tuple<T...>& tuple)
 
 }  // namespace mihatsu
 
-namespace std {
-
-template <typename T, enable_if_t<mihatsu::_internal::is_pairlike_v<T>>* = nullptr>
-inline istream& operator>>(istream& is, T& pair) {
+template <typename T, std::enable_if_t<mihatsu::_internal::is_pairlike_v<T>>* = nullptr>
+inline std::istream& std::operator>>(std::istream& is, T& pair) {
     return is >> pair.first >> pair.second;
 }
 
 template <typename... T>
-inline istream& operator>>(istream& is, tuple<T...>& tuple) {
+inline std::istream& std::operator>>(std::istream& is, std::tuple<T...>& tuple) {
     return mihatsu::_internal::input_tuple_impl<0>(is, tuple);
 }
 
 template <class T, class Allocator>
-inline istream& operator>>(istream& is, vector<T, Allocator>& vector) {
+inline std::istream& std::operator>>(std::istream& is, std::vector<T, Allocator>& vector) {
     for (auto&& p : vector) cin >> p;
     return is;
 }
-
-}  // namespace std
