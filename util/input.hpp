@@ -28,7 +28,7 @@ struct with_input<T, std::enable_if_t<std::is_arithmetic_v<T>>> {
         : val(val) {}
     constexpr inline with_input(T&& val) noexcept
         : val(std::forward<T>(val)) {}
-    constexpr inline operator T() const noexcept {
+    constexpr inline operator const T&() const noexcept {
         return val;
     }
     constexpr inline operator T&() noexcept {
