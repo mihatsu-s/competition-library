@@ -1,14 +1,20 @@
 #pragma once
 
 #include <iterator>
+#include <tuple>
 #include <type_traits>
+#include <utility>
 
 namespace mihatsu::_internal {
 
-template <typename T>
+// ---- constant mappings ----
+
+template <typename>
 constexpr inline bool false_v = false;
-template <typename T>
+template <typename>
 constexpr inline bool true_v = true;
+
+// ---- type traits ----
 
 template <typename, typename = void>
 struct is_maplike : std::false_type {};
@@ -31,11 +37,28 @@ struct is_container<T, std::void_t<decltype(std::begin(std::declval<T>()))>> : s
 template <typename T>
 constexpr inline bool is_container_v = is_container<T>::value;
 
-template <typename T, typename = void>
+template <typename, typename = void>
 struct is_pairlike : std::false_type {};
 template <typename T>
 struct is_pairlike<T, std::void_t<typename T::first_type, typename T::second_type>> : std::true_type {};
 template <typename T>
 constexpr inline bool is_pairlike_v = is_pairlike<T>::value;
+
+// ---- utilities ----
+
+template <typename T, std::size_t N>
+struct arraylike_tuple {
+    template <typename>
+    struct impl {};
+    template <std::size_t... I>
+    struct impl<std::index_sequence<I...>> {
+        template <std::size_t>
+        using T_ = T;
+        using type = std::tuple<T_<I>...>;
+    };
+    using type = typename impl<std::make_index_sequence<N>>::type;
+};
+template <typename T, std::size_t N>
+using arraylike_tuple_t = typename arraylike_tuple<T, N>::type;
 
 }  // namespace mihatsu::_internal

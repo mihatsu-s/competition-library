@@ -63,8 +63,6 @@ template <typename T>
 using VV = V<V<T>>;
 template <typename T>
 using VVV = V<VV<T>>;
-template <typename T, std::size_t dimension>
-using VD = mihatsu::MultiDimensionalVector<T, dimension>;
 using ll = long long;
 using ull = unsigned long long;
 using pll = std::pair<ll, ll>;
