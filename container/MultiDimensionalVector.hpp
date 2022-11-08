@@ -1,6 +1,6 @@
+#include <cassert>
 #include <utility>
 #include <vector>
-#include "../util/debug_print.hpp"
 
 namespace mihatsu {
 

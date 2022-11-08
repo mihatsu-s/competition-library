@@ -6,7 +6,7 @@
 #include <string>
 #include <tuple>
 #include <type_traits>
-#include "type_traits.hpp"
+#include "meta.hpp"
 
 namespace mihatsu {
 namespace _internal {
