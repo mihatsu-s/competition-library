@@ -8,6 +8,7 @@ static_assert(MIHATSU_B2E_STORE_SIZE > 0, "MIHATSU_B2E_STORE_SIZE must be greate
 #include <iterator>
 #include <memory>
 #include <type_traits>
+#include <utility>
 
 namespace mihatsu::_internal {
 

@@ -2,18 +2,12 @@
 
 #include <functional>
 #include <iostream>
-#include <limits>
 #include <tuple>
+#include <type_traits>
 #include <utility>
 #include "type_traits.hpp"
 
-namespace mihatsu {
-namespace _internal {
-
-// TODO: implement pluseq, minuseq, multiplieseq, divideseq
-
-}  // namespace _internal
-}  // namespace mihatsu
+// ---- overload operators for pair ----
 
 namespace std {
 
@@ -65,13 +59,41 @@ constexpr inline auto operator/=(T& lhs, const U& rhs) {
     lhs.second /= rhs;
     return lhs;
 }
-
-// TODO: overload operators for tuple
+template <typename T, enable_if_t<mihatsu::_internal::is_pairlike_v<T>>* = nullptr>
+inline istream& operator>>(istream& is, T& pair) {
+    return is >> pair.first >> pair.second;
+}
 
 }  // namespace std
 
-namespace mihatsu {
-namespace _internal {
+// ---- overload operators for tuple ----
+
+namespace mihatsu::_internal {
+
+template <int index, typename... T>
+inline std::istream& input_tuple_impl(std::istream& is, std::tuple<T...>& tuple) {
+    if constexpr (index < sizeof...(T)) {
+        is >> std::get<index>(tuple);
+        return input_tuple_impl<index + 1>(is, tuple);
+    } else {
+        return is;
+    }
+}
+
+}  // namespace mihatsu::_internal
+
+namespace std {
+
+template <typename... T>
+inline istream& operator>>(istream& is, tuple<T...>& tuple) {
+    return mihatsu::_internal::input_tuple_impl<0>(is, tuple);
+}
+
+}  // namespace std
+
+// ---- hash function for pair and tuple ----
+
+namespace mihatsu::_internal {
 
 inline std::size_t hash_sequence() {
     return 0;
@@ -82,8 +104,7 @@ inline std::size_t hash_sequence(const Head& head, const Tail&... tail) {
     return std::hash<Head>()(head) + 0x4cc1a90e + (seed << 23) + (seed >> 11) ^ seed;
 }
 
-}  // namespace _internal
-}  // namespace mihatsu
+}  // namespace mihatsu::_internal
 
 namespace std {
 
@@ -94,7 +115,6 @@ class hash<pair<T1, T2>> {
         return mihatsu::_internal::hash_sequence(pair.first, pair.second);
     }
 };
-
 template <typename... T>
 class hash<tuple<T...>> {
    public:

@@ -53,8 +53,9 @@ inline T& chmin(T& x, U&& y) {
 #include "../container/MultiDimensionalVector.hpp"
 #include "../util/b2e.hpp"
 #include "../util/debug_print.hpp"
-#include "../util/input.hpp"
 #include "../util/tuple.hpp"
+#include "../util/vector.hpp"
+#include "../util/with_input.hpp"
 
 template <typename T>
 using V = std::vector<T>;
