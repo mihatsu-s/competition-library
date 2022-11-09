@@ -69,5 +69,13 @@ struct Init {
 inline Init init;
 }  // namespace mihatsu::_internal
 
+// (provisional)
+namespace std {
+template <typename T, enable_if_t<mihatsu::_internal::is_pairlike_v<T>>* = nullptr>
+ostream& operator<<(ostream& os, const T& pair) {
+    return os << pair.first << " " << pair.second;
+}
+}  // namespace std
+
 using namespace std;
 using namespace mihatsu;
