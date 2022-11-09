@@ -22,6 +22,7 @@
 #include "../util/b2e.hpp"
 #include "../util/debug_print.hpp"
 #include "../util/general.hpp"
+#include "../util/lambda_shorthand.hpp"
 #include "../util/macro.h"
 #include "../util/tuple.hpp"
 #include "../util/vector.hpp"
@@ -53,6 +54,7 @@ using unpriority_queue = std::priority_queue<T, std::vector<T>, std::greater<T>>
 constexpr inline ll inf = std::numeric_limits<ll>::max() / 4;
 constexpr inline char lf = '\n';
 const inline long double pi = acos(-1.0L);
+constexpr inline mihatsu::lambda_shorthand::variable X;
 
 namespace mihatsu::_internal {
 template <std::nullptr_t = nullptr>
