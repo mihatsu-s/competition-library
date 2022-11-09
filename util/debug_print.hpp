@@ -8,8 +8,7 @@
 #include <type_traits>
 #include "../internal/meta.hpp"
 
-namespace mihatsu {
-namespace _internal {
+namespace mihatsu::_internal {
 
 template <std::nullptr_t = nullptr>
 struct DebugPrinter {
@@ -102,11 +101,10 @@ struct DebugPrinter {
     }
 };
 
-}  // namespace _internal
-}  // namespace mihatsu
+}  // namespace mihatsu::_internal
 
 #define debug_print(...) (mihatsu::_internal::DebugPrinter(__FILE__, __LINE__, #__VA_ARGS__)(__VA_ARGS__))
 
 #else
-#define debug_print(...) do {} while (false)
+#define debug_print(...) ([]() {})()
 #endif
