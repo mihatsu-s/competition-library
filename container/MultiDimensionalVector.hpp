@@ -3,7 +3,7 @@
 #include <tuple>
 #include <utility>
 #include <vector>
-#include "../util/meta.hpp"
+#include "../internal/meta.hpp"
 
 namespace mihatsu {
 

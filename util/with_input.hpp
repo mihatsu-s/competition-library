@@ -3,7 +3,7 @@
 #include <iostream>
 #include <type_traits>
 #include <utility>
-#include "meta.hpp"
+#include "../internal/meta.hpp"
 
 namespace mihatsu {
 
