@@ -108,5 +108,5 @@ struct DebugPrinter {
 #define debug_print(...) (mihatsu::_internal::DebugPrinter(__FILE__, __LINE__, #__VA_ARGS__)(__VA_ARGS__))
 
 #else
-#define debug_print(...)
+#define debug_print(...) do {} while (false)
 #endif

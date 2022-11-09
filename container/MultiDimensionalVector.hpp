@@ -1,4 +1,5 @@
-#include <cassert>
+#pragma once
+
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -61,6 +62,8 @@ class MultiDimensionalVector : public _internal::nested_vector_t<T, dimension> {
     };
 };
 template <typename T>
+MultiDimensionalVector(const _internal::arraylike_tuple_t<std::size_t, 0>&, const T&) -> MultiDimensionalVector<T, 0>;
+template <typename T>
 MultiDimensionalVector(const _internal::arraylike_tuple_t<std::size_t, 1>&, const T&) -> MultiDimensionalVector<T, 1>;
 template <typename T>
 MultiDimensionalVector(const _internal::arraylike_tuple_t<std::size_t, 2>&, const T&) -> MultiDimensionalVector<T, 2>;
@@ -76,5 +79,7 @@ template <typename T>
 MultiDimensionalVector(const _internal::arraylike_tuple_t<std::size_t, 7>&, const T&) -> MultiDimensionalVector<T, 7>;
 template <typename T>
 MultiDimensionalVector(const _internal::arraylike_tuple_t<std::size_t, 8>&, const T&) -> MultiDimensionalVector<T, 8>;
+template <typename T>
+MultiDimensionalVector(const _internal::arraylike_tuple_t<std::size_t, 9>&, const T&) -> MultiDimensionalVector<T, 9>;
 
 }  // namespace mihatsu

@@ -1,7 +1,7 @@
 #pragma once
 
 #ifndef MIHATSU_B2E_STORE_SIZE
-#define MIHATSU_B2E_STORE_SIZE 16
+#define MIHATSU_B2E_STORE_SIZE 10
 #endif
 static_assert(MIHATSU_B2E_STORE_SIZE > 0, "MIHATSU_B2E_STORE_SIZE must be greater than 0");
 
