@@ -37,7 +37,7 @@ struct VectorPrinter {
 
     template <typename Invocable, std::enable_if_t<std::is_invocable_v<Invocable, T>>* = nullptr>
     auto operator<<(Invocable f) {
-        using U = std::invoke_result_t<Invocable, T>;
+        using U = std::remove_reference_t<std::invoke_result_t<Invocable, T>>;
         const Vector& vector = get_vector();
         std::vector<U, std::allocator<U>> new_vector;
         new_vector.reserve(vector.size());
