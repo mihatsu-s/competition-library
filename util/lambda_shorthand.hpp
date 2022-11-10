@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <tuple>
 #include <type_traits>
 
 namespace mihatsu {
@@ -8,18 +9,33 @@ namespace lambda_shorthand {
 
 namespace expression {
 
+// ---- base ----
+
 struct base {};
 
 template <typename T>
 constexpr inline bool is_expression = std::is_base_of_v<base, T>;
+
+#define _MIHATSU_EXPRESSION_COMMON                                        \
+    /*  (condition-expr)[true-expr][false-expr]  */                       \
+    template <typename T, std::enable_if_t<is_expression<T>>* = nullptr>  \
+    constexpr inline auto operator[](const T& t) const {                  \
+        return conditional(*this, t, t);                                  \
+    }                                                                     \
+    template <typename T, std::enable_if_t<!is_expression<T>>* = nullptr> \
+    constexpr inline auto operator[](const T& t) const {                  \
+        return conditional(*this, constant_t<T>(t), constant_t<T>(t));    \
+    }
+
+// ---- constant ----
 
 template <typename T>
 struct constant : base {
     T value;
     constexpr inline constant(const T& value)
         : value(value) {}
-    template <typename Env>
-    constexpr inline T operator()(const Env& env) const {
+    template <typename... Args>
+    constexpr inline T operator()(const Args&... args) const {
         return value;
     }
 };
@@ -36,52 +52,131 @@ struct constant_t_impl<T, std::enable_if_t<std::is_convertible_v<T, std::string>
 template <typename T>
 using constant_t = typename constant_t_impl<T>::type;
 
-#define _MIHATSU_DEF_EXPR1(name, op, op_func)                                \
-    template <typename Exp>                                                  \
-    struct name : base {                                                     \
-        Exp exp;                                                             \
-        constexpr inline name(const Exp& exp)                                \
-            : exp(exp) {}                                                    \
-        template <typename Env>                                              \
-        constexpr inline auto operator()(const Env& env) const {             \
-            return op(exp(env));                                             \
-        }                                                                    \
-    };                                                                       \
-    template <typename Exp, std::enable_if_t<is_expression<Exp>>* = nullptr> \
-    constexpr inline name<Exp> op_func(const Exp& exp) {                     \
-        return {exp};                                                        \
+// ---- conditional ----
+
+template <typename Cond, typename T, typename F>
+struct conditional : base {
+    Cond cond;
+    T t;
+    F f;
+    constexpr inline conditional(const Cond& cond, const T& t, const F& f)
+        : cond(cond), t(t), f(f) {}
+    template <typename... Args>
+    constexpr inline auto operator()(const Args&... args) const {
+        return cond(args...) ? t(args...) : f(args...);
+    }
+
+    // update false-expr
+    template <typename NewF, std::enable_if_t<is_expression<NewF>>* = nullptr>
+    constexpr inline auto operator[](const NewF& new_f) const {
+        return conditional<Cond, T, NewF>(cond, t, new_f);
+    }
+    template <typename NewF, std::enable_if_t<!is_expression<NewF>>* = nullptr>
+    constexpr inline auto operator[](const NewF& new_f) const {
+        return conditional<Cond, T, constant_t<NewF>>(cond, t, constant_t<NewF>(new_f));
+    }
+};
+
+// ---- variable ----
+
+template <std::size_t ID>
+struct variable : base {
+    template <typename... Args>
+    constexpr inline auto operator()(const Args&... args) const {
+        return std::get<ID>(std::make_tuple(args...));
+    }
+    _MIHATSU_EXPRESSION_COMMON
+
+    struct : base {
+        template <typename... Args>
+        constexpr inline auto operator()(const Args&... args) const {
+            return std::get<ID>(std::make_tuple(args...)).first;
+        }
+        struct : base {
+            template <typename... Args>
+            constexpr inline auto operator()(const Args&... args) const {
+                return std::get<ID>(std::make_tuple(args...)).first.first;
+            }
+        } first;
+        struct : base {
+            template <typename... Args>
+            constexpr inline auto operator()(const Args&... args) const {
+                return std::get<ID>(std::make_tuple(args...)).first.second;
+            }
+        } second;
+    } first;
+    struct : base {
+        template <typename... Args>
+        constexpr inline auto operator()(const Args&... args) const {
+            return std::get<ID>(std::make_tuple(args...)).first;
+        }
+        struct : base {
+            template <typename... Args>
+            constexpr inline auto operator()(const Args&... args) const {
+                return std::get<ID>(std::make_tuple(args...)).second.first;
+            }
+        } first;
+        struct : base {
+            template <typename... Args>
+            constexpr inline auto operator()(const Args&... args) const {
+                return std::get<ID>(std::make_tuple(args...)).second.second;
+            }
+        } second;
+    } second;
+};
+
+// ---- operators ----
+
+#define _MIHATSU_DEF_EXPR1(name, op, op_func)                                  \
+    template <typename Expr>                                                   \
+    struct name : base {                                                       \
+        Expr expr;                                                             \
+        constexpr inline name(const Expr& expr)                                \
+            : expr(expr) {}                                                    \
+        template <typename... Args>                                            \
+        constexpr inline auto operator()(const Args&... args) const {          \
+            return op(expr(args...));                                          \
+        }                                                                      \
+        _MIHATSU_EXPRESSION_COMMON                                             \
+    };                                                                         \
+    template <typename Expr, std::enable_if_t<is_expression<Expr>>* = nullptr> \
+    constexpr inline auto op_func(const Expr& expr) {                          \
+        return name<Expr>(expr);                                               \
     }
 
 _MIHATSU_DEF_EXPR1(plus, +, operator+);
 _MIHATSU_DEF_EXPR1(minus, -, operator-);
 _MIHATSU_DEF_EXPR1(lnot, !, operator!);
+_MIHATSU_DEF_EXPR1(bnot, ~, operator~);
 
-#undef _MIHATSU_DEF_EXPR1
-
-#define _MIHATSU_DEF_EXPR2(name, op, op_func)                                                             \
-    template <typename L, typename R>                                                                     \
-    struct name : base {                                                                                  \
-        L l;                                                                                              \
-        R r;                                                                                              \
-        constexpr inline name(const L& l, const R& r)                                                     \
-            : l(l), r(r) {}                                                                               \
-        template <typename Env>                                                                           \
-        constexpr inline auto operator()(const Env& env) const {                                          \
-            return l(env) op r(env);                                                                      \
-        }                                                                                                 \
-    };                                                                                                    \
-    template <typename L, typename R, std::enable_if_t<is_expression<L> && is_expression<R>>* = nullptr>  \
-    constexpr inline name<L, R> op_func(const L& l, const R& r) {                                         \
-        return {l, r};                                                                                    \
-    }                                                                                                     \
-    template <typename L, typename R, std::enable_if_t<!is_expression<L> && is_expression<R>>* = nullptr> \
-    constexpr inline name<constant_t<L>, R> op_func(const L& l, const R& r) {                             \
-        return {constant_t<L>(l), r};                                                                     \
-    }                                                                                                     \
-    template <typename L, typename R, std::enable_if_t<is_expression<L> && !is_expression<R>>* = nullptr> \
-    constexpr inline name<L, constant_t<R>> op_func(const L& l, const R& r) {                             \
-        return {l, constant_t<R>(r)};                                                                     \
+#define _MIHATSU_DEF_EXPR_OP2(name, op_func)                                                                      \
+    template <typename Lhs, typename Rhs, std::enable_if_t<is_expression<Lhs> && is_expression<Rhs>>* = nullptr>  \
+    constexpr inline auto op_func(const Lhs& lhs, const Rhs& rhs) {                                               \
+        return name<Lhs, Rhs>(lhs, rhs);                                                                          \
+    }                                                                                                             \
+    template <typename Lhs, typename Rhs, std::enable_if_t<!is_expression<Lhs> && is_expression<Rhs>>* = nullptr> \
+    constexpr inline auto op_func(const Lhs& lhs, const Rhs& rhs) {                                               \
+        return name<constant_t<Lhs>, Rhs>(constant_t<Lhs>(lhs), rhs);                                             \
+    }                                                                                                             \
+    template <typename Lhs, typename Rhs, std::enable_if_t<is_expression<Lhs> && !is_expression<Rhs>>* = nullptr> \
+    constexpr inline auto op_func(const Lhs& lhs, const Rhs& rhs) {                                               \
+        return name<Lhs, constant_t<Rhs>>(lhs, constant_t<Rhs>(rhs));                                             \
     }
+
+#define _MIHATSU_DEF_EXPR2(name, op, op_func)                         \
+    template <typename Lhs, typename Rhs>                             \
+    struct name : base {                                              \
+        Lhs lhs;                                                      \
+        Rhs rhs;                                                      \
+        constexpr inline name(const Lhs& lhs, const Rhs& rhs)         \
+            : lhs(lhs), rhs(rhs) {}                                   \
+        template <typename... Args>                                   \
+        constexpr inline auto operator()(const Args&... args) const { \
+            return lhs(args...) op rhs(args...);                      \
+        }                                                             \
+        _MIHATSU_EXPRESSION_COMMON                                    \
+    };                                                                \
+    _MIHATSU_DEF_EXPR_OP2(name, op_func)
 
 _MIHATSU_DEF_EXPR2(add, +, operator+)
 _MIHATSU_DEF_EXPR2(sub, -, operator-)
@@ -96,53 +191,44 @@ _MIHATSU_DEF_EXPR2(lt, <, operator<)
 _MIHATSU_DEF_EXPR2(le, <=, operator<=)
 _MIHATSU_DEF_EXPR2(gt, >, operator>)
 _MIHATSU_DEF_EXPR2(ge, >=, operator>=)
+_MIHATSU_DEF_EXPR2(band, &, operator&)
+_MIHATSU_DEF_EXPR2(bor, |, operator|)
+_MIHATSU_DEF_EXPR2(bxor, ^, operator^)
+_MIHATSU_DEF_EXPR2(lshift, <<, operator<<)
+_MIHATSU_DEF_EXPR2(rshift, >>, operator>>)
 
+template <typename T1, typename T2>
+struct pair : base {
+    T1 first;
+    T2 second;
+    constexpr inline pair(const T1& first, const T2& second)
+        : first(first), second(second) {}
+    template <typename... Args>
+    constexpr inline auto operator()(const Args&... args) const {
+        return std::make_pair(first(args...), second(args...));
+    }
+    _MIHATSU_EXPRESSION_COMMON
+};
+#define _MIHATSU_COMMA ,
+_MIHATSU_DEF_EXPR_OP2(pair, operator _MIHATSU_COMMA)
+
+#undef _MIHATSU_COMMA
+#undef _MIHATSU_DEF_EXPR1
 #undef _MIHATSU_DEF_EXPR2
-
-template <typename Cond, typename T, typename F>
-struct conditional : base {
-    Cond cond;
-    T t;
-    F f;
-    constexpr inline conditional(const Cond& cond, const T& t, const F& f)
-        : cond(cond), t(t), f(f) {}
-    template <typename Env>
-    constexpr inline auto operator()(const Env& env) const {
-        return cond(env) ? t(env) : f(env);
-    }
-};
-template <typename Cond, typename T>
-struct conditional_inter {  // not expression
-    Cond cond;
-    T t;
-    constexpr inline conditional_inter(const Cond& cond, const T& t)
-        : cond(cond), t(t) {}
-    template <typename F, std::enable_if_t<is_expression<F>>* = nullptr>
-    constexpr inline conditional<Cond, T, F> operator|(const F& f) {
-        return {cond, t, f};
-    }
-    template <typename F, std::enable_if_t<!is_expression<F>>* = nullptr>
-    constexpr inline conditional<Cond, T, constant_t<F>> operator|(const F& f) {
-        return {cond, t, constant_t<F>(f)};
-    }
-};
-template <typename Cond, typename T, std::enable_if_t<is_expression<Cond> && is_expression<T>>* = nullptr>
-constexpr inline conditional_inter<Cond, T> operator|(const Cond& cond, const T& t) {
-    return {cond, t};
-}
-template <typename Cond, typename T, std::enable_if_t<is_expression<Cond> && !is_expression<T>>* = nullptr>
-constexpr inline conditional_inter<Cond, constant_t<T>> operator|(const Cond& cond, const T& t) {
-    return {cond, constant_t<T>(t)};
-}
+#undef _MIHATSU_DEF_EXPR_OP2
+#undef _MIHATSU_EXPRESSION_COMMON
 
 }  // namespace expression
 
-struct variable : expression::base {
-    template <typename Env>
-    constexpr inline Env operator()(const Env& env) const {
-        return env;
-    }
-};
+template <std::size_t VariableID = 0>
+constexpr inline auto make_variable() {
+    return expression::variable<VariableID>();
+}
+
+template <typename T>
+constexpr inline auto make_constant(const T& value) {
+    return expression::constant<T>(value);
+}
 
 }  // namespace lambda_shorthand
 }  // namespace mihatsu

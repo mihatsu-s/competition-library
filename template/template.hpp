@@ -53,8 +53,9 @@ template <typename T>
 using unpriority_queue = std::priority_queue<T, std::vector<T>, std::greater<T>>;
 constexpr inline ll inf = std::numeric_limits<ll>::max() / 4;
 constexpr inline char lf = '\n';
-const inline long double pi = acos(-1.0L);
-constexpr inline mihatsu::lambda_shorthand::variable X;
+constexpr inline long double pi = 3.1415926535897932384626L;
+constexpr inline auto X = mihatsu::lambda_shorthand::make_variable<0>();
+constexpr inline auto Y = mihatsu::lambda_shorthand::make_variable<1>();
 
 namespace mihatsu::_internal {
 template <std::nullptr_t = nullptr>
