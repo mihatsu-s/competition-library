@@ -20,6 +20,7 @@
 
 #include "../container/MultiDimensionalVector.hpp"
 #include "../util/b2e.hpp"
+#include "../util/container.hpp"
 #include "../util/debug_print.hpp"
 #include "../util/general.hpp"
 #include "../util/lambda_shorthand.hpp"
