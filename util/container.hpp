@@ -267,7 +267,7 @@ struct container_helper<std::unordered_multimap<Key, T, Hash, Pred, Allocator>> 
 }  // namespace _internal
 
 template <class Container, typename MappingFunction>
-inline auto mapped(Container&& container, MappingFunction fn) {
+inline auto mapped(Container&& container, MappingFunction&& fn) {
     _internal::container_helper helper(container);
 
     using U = typename decltype(helper)::template invoke_result_t<MappingFunction>;
@@ -297,7 +297,7 @@ inline auto sorted(Container&& container) {
 }
 
 template <class Container, typename KeyFunction>
-inline auto sorted(Container&& container, KeyFunction fn) {
+inline auto sorted(Container&& container, KeyFunction&& fn) {
     _internal::container_helper helper(container);
     using T = typename decltype(helper)::value_type;
     using U = typename decltype(helper)::template invoke_result_t<KeyFunction>;
@@ -317,12 +317,7 @@ inline auto sorted(Container&& container, KeyFunction fn) {
 }
 
 template <class Container>
-inline auto indexed(Container&& container) {
-    return mapped(container, [](const auto& v, const auto& i) { return std::make_pair(v, i); });
-}
-
-template <class Container>
-inline auto ordered(Container&& container) {
+inline auto ranked(Container&& container) {
     _internal::container_helper helper(container);
     using T = typename decltype(helper)::value_type;
 
@@ -336,13 +331,13 @@ inline auto ordered(Container&& container) {
 
     return mapped(
         std::forward<Container>(container),
-        [&vals](const T& val, _internal::signed_size_t _) -> std::pair<T, _internal::signed_size_t> {
-            return {val, std::lower_bound(vals.begin(), vals.end(), val) - vals.begin()};
+        [&vals](const T& val, _internal::signed_size_t _) -> _internal::signed_size_t {
+            return std::lower_bound(vals.begin(), vals.end(), val) - vals.begin();
         });
 }
 
 template <class Container, typename KeyFunction>
-inline auto ordered(Container&& container, KeyFunction fn) {
+inline auto ranked(Container&& container, KeyFunction&& fn) {
     _internal::container_helper helper(container);
     using T = typename decltype(helper)::value_type;
     using U = typename decltype(helper)::template invoke_result_t<KeyFunction>;
@@ -360,8 +355,8 @@ inline auto ordered(Container&& container, KeyFunction fn) {
     std::size_t i = 0;
     return mapped(
         std::forward<Container>(container),
-        [&keys, &temp, &i](const T& val, _internal::signed_size_t _) -> std::pair<T, _internal::signed_size_t> {
-            return {val, std::lower_bound(keys.begin(), keys.end(), temp[i++]) - keys.begin()};
+        [&keys, &temp, &i](const T& val, _internal::signed_size_t _) -> _internal::signed_size_t {
+            return std::lower_bound(keys.begin(), keys.end(), temp[i++]) - keys.begin();
         });
 }
 
