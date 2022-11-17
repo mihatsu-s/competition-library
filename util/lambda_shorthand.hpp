@@ -16,14 +16,35 @@ struct base {};
 template <typename T>
 constexpr inline bool is_expression = std::is_base_of_v<base, T>;
 
+template <typename... T>
+struct base_wrapper : base {
+    static constexpr std::size_t minimum_argument_length = 0;
+};
+template <typename T1>
+struct base_wrapper<T1> : base {
+    static constexpr std::size_t minimum_argument_length = T1::minimum_argument_length;
+};
+template <typename T1, typename T2>
+struct base_wrapper<T1, T2> : base {
+    static constexpr std::size_t minimum_argument_length = std::max({T1::minimum_argument_length, T2::minimum_argument_length});
+};
+template <typename T1, typename T2, typename T3>
+struct base_wrapper<T1, T2, T3> : base {
+    static constexpr std::size_t minimum_argument_length = std::max({T1::minimum_argument_length, T2::minimum_argument_length, T3::minimum_argument_length});
+};
+template <std::size_t ID>
+struct variable_base_wrapper : base {
+    static constexpr std::size_t minimum_argument_length = ID + 1;
+};
+
 // ---- constant ----
 
 template <typename T>
-struct constant : base {
+struct constant : base_wrapper<> {
     T value;
     constexpr inline constant(const T& value)
         : value(value) {}
-    template <typename... Args>
+    template <typename... Args, std::enable_if_t<sizeof...(Args) >= base_wrapper<>::minimum_argument_length>* = nullptr>
     constexpr inline T operator()(const Args&... args) const {
         return value;
     }
@@ -44,43 +65,43 @@ using constant_t = typename constant_t_impl<T>::type;
 // ---- variable ----
 
 template <std::size_t ID>
-struct variable : base {
-    template <typename... Args>
+struct variable : variable_base_wrapper<ID> {
+    template <typename... Args, std::enable_if_t<sizeof...(Args) >= variable_base_wrapper<ID>::minimum_argument_length>* = nullptr>
     constexpr inline auto operator()(const Args&... args) const {
         return std::get<ID>(std::make_tuple(args...));
     }
 
-    struct : base {
-        template <typename... Args>
+    struct : variable_base_wrapper<ID> {
+        template <typename... Args, std::enable_if_t<sizeof...(Args) >= variable_base_wrapper<ID>::minimum_argument_length>* = nullptr>
         constexpr inline auto operator()(const Args&... args) const {
             return std::get<ID>(std::make_tuple(args...)).first;
         }
-        struct : base {
-            template <typename... Args>
+        struct : variable_base_wrapper<ID> {
+            template <typename... Args, std::enable_if_t<sizeof...(Args) >= variable_base_wrapper<ID>::minimum_argument_length>* = nullptr>
             constexpr inline auto operator()(const Args&... args) const {
                 return std::get<ID>(std::make_tuple(args...)).first.first;
             }
         } first;
-        struct : base {
-            template <typename... Args>
+        struct : variable_base_wrapper<ID> {
+            template <typename... Args, std::enable_if_t<sizeof...(Args) >= variable_base_wrapper<ID>::minimum_argument_length>* = nullptr>
             constexpr inline auto operator()(const Args&... args) const {
                 return std::get<ID>(std::make_tuple(args...)).first.second;
             }
         } second;
     } first;
-    struct : base {
-        template <typename... Args>
+    struct : variable_base_wrapper<ID> {
+        template <typename... Args, std::enable_if_t<sizeof...(Args) >= variable_base_wrapper<ID>::minimum_argument_length>* = nullptr>
         constexpr inline auto operator()(const Args&... args) const {
             return std::get<ID>(std::make_tuple(args...)).second;
         }
-        struct : base {
-            template <typename... Args>
+        struct : variable_base_wrapper<ID> {
+            template <typename... Args, std::enable_if_t<sizeof...(Args) >= variable_base_wrapper<ID>::minimum_argument_length>* = nullptr>
             constexpr inline auto operator()(const Args&... args) const {
                 return std::get<ID>(std::make_tuple(args...)).second.first;
             }
         } first;
-        struct : base {
-            template <typename... Args>
+        struct : variable_base_wrapper<ID> {
+            template <typename... Args, std::enable_if_t<sizeof...(Args) >= variable_base_wrapper<ID>::minimum_argument_length>* = nullptr>
             constexpr inline auto operator()(const Args&... args) const {
                 return std::get<ID>(std::make_tuple(args...)).second.second;
             }
@@ -90,20 +111,20 @@ struct variable : base {
 
 // ---- operators ----
 
-#define _MIHATSU_DEF_EXPR1(name, op, op_func)                                  \
-    template <typename Expr>                                                   \
-    struct name : base {                                                       \
-        Expr expr;                                                             \
-        constexpr inline name(const Expr& expr)                                \
-            : expr(expr) {}                                                    \
-        template <typename... Args>                                            \
-        constexpr inline auto operator()(const Args&... args) const {          \
-            return op(expr(args...));                                          \
-        }                                                                      \
-    };                                                                         \
-    template <typename Expr, std::enable_if_t<is_expression<Expr>>* = nullptr> \
-    constexpr inline auto op_func(const Expr& expr) {                          \
-        return name<Expr>(expr);                                               \
+#define _MIHATSU_DEF_EXPR1(name, op, op_func)                                                                                    \
+    template <typename Expr>                                                                                                     \
+    struct name : base_wrapper<Expr> {                                                                                           \
+        Expr expr;                                                                                                               \
+        constexpr inline name(const Expr& expr)                                                                                  \
+            : expr(expr) {}                                                                                                      \
+        template <typename... Args, std::enable_if_t<sizeof...(Args) >= base_wrapper<Expr>::minimum_argument_length>* = nullptr> \
+        constexpr inline auto operator()(const Args&... args) const {                                                            \
+            return op(expr(args...));                                                                                            \
+        }                                                                                                                        \
+    };                                                                                                                           \
+    template <typename Expr, std::enable_if_t<is_expression<Expr>>* = nullptr>                                                   \
+    constexpr inline auto op_func(const Expr& expr) {                                                                            \
+        return name<Expr>(expr);                                                                                                 \
     }
 
 _MIHATSU_DEF_EXPR1(plus, +, operator+);
@@ -125,18 +146,18 @@ _MIHATSU_DEF_EXPR1(bnot, ~, operator~);
         return name<Lhs, constant_t<Rhs>>(lhs, constant_t<Rhs>(rhs));                                             \
     }
 
-#define _MIHATSU_DEF_EXPR2(name, op, op_func)                         \
-    template <typename Lhs, typename Rhs>                             \
-    struct name : base {                                              \
-        Lhs lhs;                                                      \
-        Rhs rhs;                                                      \
-        constexpr inline name(const Lhs& lhs, const Rhs& rhs)         \
-            : lhs(lhs), rhs(rhs) {}                                   \
-        template <typename... Args>                                   \
-        constexpr inline auto operator()(const Args&... args) const { \
-            return lhs(args...) op rhs(args...);                      \
-        }                                                             \
-    };                                                                \
+#define _MIHATSU_DEF_EXPR2(name, op, op_func)                                                                                        \
+    template <typename Lhs, typename Rhs>                                                                                            \
+    struct name : base_wrapper<Lhs, Rhs> {                                                                                           \
+        Lhs lhs;                                                                                                                     \
+        Rhs rhs;                                                                                                                     \
+        constexpr inline name(const Lhs& lhs, const Rhs& rhs)                                                                        \
+            : lhs(lhs), rhs(rhs) {}                                                                                                  \
+        template <typename... Args, std::enable_if_t<sizeof...(Args) >= base_wrapper<Lhs, Rhs>::minimum_argument_length>* = nullptr> \
+        constexpr inline auto operator()(const Args&... args) const {                                                                \
+            return lhs(args...) op rhs(args...);                                                                                     \
+        }                                                                                                                            \
+    };                                                                                                                               \
     _MIHATSU_DEF_EXPR_OP2(name, op_func)
 
 _MIHATSU_DEF_EXPR2(add, +, operator+)
@@ -161,13 +182,13 @@ _MIHATSU_DEF_EXPR2(rshift, >>, operator>>)
 // ---- conditional ----
 
 template <typename Cond, typename T, typename F>
-struct conditional : base {
+struct conditional : base_wrapper<Cond, T, F> {
     Cond cond;
     T t;
     F f;
     constexpr inline conditional(const Cond& cond, const T& t, const F& f)
         : cond(cond), t(t), f(f) {}
-    template <typename... Args>
+    template <typename... Args, std::enable_if_t<sizeof...(Args) >= base_wrapper<Cond, T, F>::minimum_argument_length>* = nullptr>
     constexpr inline auto operator()(const Args&... args) const {
         return cond(args...) ? t(args...) : f(args...);
     }
@@ -194,12 +215,12 @@ _MIHATSU_DEF_EXPR_OP2(conditional_intermediate, operator|)
 // ---- pair ----
 
 template <typename T1, typename T2>
-struct pair : base {
+struct pair : base_wrapper<T1, T2> {
     T1 first;
     T2 second;
     constexpr inline pair(const T1& first, const T2& second)
         : first(first), second(second) {}
-    template <typename... Args>
+    template <typename... Args, std::enable_if_t<sizeof...(Args) >= base_wrapper<T1, T2>::minimum_argument_length>* = nullptr>
     constexpr inline auto operator()(const Args&... args) const {
         return std::make_pair(first(args...), second(args...));
     }

@@ -15,6 +15,7 @@
 #include <utility>
 #include <vector>
 #include "../internal/meta.hpp"
+#include "../internal/redundant_invoke.hpp"
 
 namespace mihatsu {
 
@@ -57,10 +58,10 @@ struct base {
     };
 
     template <typename Fn>
-    using invoke_result_t = std::invoke_result_t<Fn, value_type>;
+    using invoke_result_t = redundant_invoke_result_t<Fn, value_type>;
     template <typename Fn, typename Iterator>
     inline auto invoke(Fn&& fn, Iterator it) {
-        return std::invoke(fn, *it);
+        return redundant_invoke(fn, *it);
     }
 
     inline void reserve(std::size_t) {}
@@ -69,9 +70,15 @@ struct base {
     inline auto get_value(Iterator it) const {
         return *it;
     }
+    template<typename Iterator, typename Value>
+    inline void set_value(Iterator it, Value&& val) {
+        *it = std::forward<Value>(val);
+    }
+    static constexpr bool value_settable = true;
 
     template <typename PositionIterator, typename Value>
     inline void insert(PositionIterator, Value&& val) {
+        // PositionIterator is not read except for map 
         container.push_back(std::forward<Value>(val));
     }
 };
@@ -84,16 +91,18 @@ struct random_access : base<RandomAccessContainer> {
     using typename base<RandomAccessContainer>::value_type;
 
     template <typename Fn>
-    using invoke_result_t = std::invoke_result_t<Fn, value_type, key_type>;
+    using invoke_result_t = redundant_invoke_result_t<Fn, value_type, key_type>;
     template <typename Fn, typename Iterator>
     inline auto invoke(Fn&& fn, Iterator it) {
-        return std::invoke(fn, *it, static_cast<signed_size_t>(it - std::begin(this->container)));
+        return redundant_invoke(fn, *it, static_cast<signed_size_t>(it - std::begin(this->container)));
     }
 };
 
 template <typename Set>
 struct set : base<Set> {
     using base<Set>::base;
+
+    static constexpr bool value_settable = false;
 
     template <typename PositionIterator, typename Value>
     inline void insert(PositionIterator, Value&& val) {
@@ -109,15 +118,19 @@ struct map : base<Map> {
     using value_type = typename Map::mapped_type;
 
     template <typename Fn>
-    using invoke_result_t = std::invoke_result_t<Fn, value_type, key_type>;
+    using invoke_result_t = redundant_invoke_result_t<Fn, value_type, key_type>;
     template <typename Fn, typename Iterator>
     inline auto invoke(Fn&& fn, Iterator it) {
-        return std::invoke(fn, it->second, it->first);
+        return redundant_invoke(fn, it->second, it->first);
     }
 
     template <typename Iterator>
     inline auto get_value(Iterator it) const {
         return it->second;
+    }
+    template <typename Iterator, typename Value>
+    inline void set_value(Iterator it, Value&& val) {
+        it->second = std::forward<Value>(val);
     }
 
     template <typename PositionIterator, typename Value>
@@ -271,29 +284,42 @@ inline auto mapped(Container&& container, MappingFunction&& fn) {
     _internal::container_helper helper(container);
 
     using U = typename decltype(helper)::template invoke_result_t<MappingFunction>;
-    typename decltype(helper)::template change_value_type<U> res;
-    _internal::container_helper res_helper(res);
+    using ResultType = typename decltype(helper)::template change_value_type<U>;
 
-    if (helper.size() >= 0) res_helper.reserve(helper.size());
-    for (auto it = std::begin(container); it != std::end(container); ++it) {
-        res_helper.insert(it, helper.invoke(fn, it));
+    if constexpr (std::is_base_of_v<ResultType, Container /* rvalue */> && !std::is_const_v<Container> && decltype(helper)::value_settable) {
+        for (auto it = std::begin(container); it != std::end(container); ++it) {
+            helper.set_value(it, helper.invoke(fn, it));
+        }
+        return container;
+    } else {
+        ResultType res;
+        _internal::container_helper res_helper(res);
+        if (helper.size() >= 0) res_helper.reserve(helper.size());
+        for (auto it = std::begin(container); it != std::end(container); ++it) {
+            res_helper.insert(it, helper.invoke(fn, it));
+        }
+        return res;
     }
-
-    return res;
 }
 
 template <class Container>
 inline auto sorted(Container&& container) {
     _internal::container_helper helper(container);
     using T = typename decltype(helper)::value_type;
+    using ResultType = std::vector<T>;
 
-    std::vector<T> res;
-    if (helper.size() >= 0) res.reserve(helper.size());
-    for (auto it = std::begin(container); it != std::end(container); ++it) {
-        res.push_back(helper.get_value(it));
+    if constexpr (std::is_base_of_v<ResultType, Container /* rvalue */> && !std::is_const_v<Container>) {
+        std::sort(container.begin(), container.end());
+        return container;
+    } else {
+        ResultType res;
+        if (helper.size() >= 0) res.reserve(helper.size());
+        for (auto it = std::begin(container); it != std::end(container); ++it) {
+            res.push_back(helper.get_value(it));
+        }
+        std::sort(res.begin(), res.end());
+        return res;
     }
-    std::sort(res.begin(), res.end());
-    return res;
 }
 
 template <class Container, typename KeyFunction>
@@ -302,6 +328,7 @@ inline auto sorted(Container&& container, KeyFunction&& fn) {
     using T = typename decltype(helper)::value_type;
     using U = typename decltype(helper)::template invoke_result_t<KeyFunction>;
     using P = std::pair<T, U>;
+    using ResultType = std::vector<T>;
 
     std::vector<P> temp;
     if (helper.size() >= 0) temp.reserve(helper.size());
@@ -310,10 +337,15 @@ inline auto sorted(Container&& container, KeyFunction&& fn) {
     }
     std::sort(temp.begin(), temp.end(), [](const P& lhs, const P& rhs) { return lhs.second < rhs.second; });
 
-    std::vector<T> res;
-    res.reserve(temp.size());
-    for (auto&& [t, u] : temp) res.push_back(t);
-    return res;
+    if constexpr (std::is_base_of_v<ResultType, Container /* rvalue */> && !std::is_const_v<Container>) {
+        for (std::size_t i = 0; i < container.size(); ++i) container[i] = temp[i].first;
+        return container;
+    } else {
+        ResultType res;
+        res.reserve(temp.size());
+        for (auto&& [t, u] : temp) res.push_back(t);
+        return res;
+    }
 }
 
 template <class Container>
@@ -331,7 +363,7 @@ inline auto ranked(Container&& container) {
 
     return mapped(
         std::forward<Container>(container),
-        [&vals](const T& val, _internal::signed_size_t _) -> _internal::signed_size_t {
+        [&vals](const T& val) -> _internal::signed_size_t {
             return std::lower_bound(vals.begin(), vals.end(), val) - vals.begin();
         });
 }
@@ -355,7 +387,7 @@ inline auto ranked(Container&& container, KeyFunction&& fn) {
     std::size_t i = 0;
     return mapped(
         std::forward<Container>(container),
-        [&keys, &temp, &i](const T& val, _internal::signed_size_t _) -> _internal::signed_size_t {
+        [&keys, &temp, &i]() -> _internal::signed_size_t {
             return std::lower_bound(keys.begin(), keys.end(), temp[i++]) - keys.begin();
         });
 }
