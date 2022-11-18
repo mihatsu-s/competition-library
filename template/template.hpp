@@ -80,6 +80,12 @@ ostream& operator<<(ostream& os, const T& pair) {
     return os << pair.first << " " << pair.second;
 }
 }  // namespace std
+namespace mihatsu::_internal {
+template <>
+struct container_helper<stringi> : container_helper<std::string> {
+    using container_helper<std::string>::container_helper;
+};
+}  // namespace mihatsu::_internal
 
 using namespace std;
 using namespace mihatsu;
