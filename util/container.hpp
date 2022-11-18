@@ -46,29 +46,37 @@ struct container_selector<T, std::void_t<decltype(std::hash<T>())>> {
 
 namespace container_helper_base {
 
+struct {
+    template <typename Fn, class First, class... Args>
+    inline auto operator()(Fn&& fn, First&& first, Args&&... args) {
+        if constexpr (is_redundant_invocable_v<Fn, First, Args...>) {
+            return redundant_invoke(std::forward<Fn>(fn), std::forward<First>(first), std::forward<Args>(args)...);
+        } else {
+            return std::forward<Fn>(fn)[std::forward<First>(first)];
+        }
+    }
+} container_invoke;
+
+template <typename Fn, class First, class... Args>
+using container_invoke_result_t = typename std::invoke_result_t<decltype(container_invoke), Fn, First, Args...>;
+
 template <typename Container>
 struct base {
     Container& container;
     inline base(Container& container)
         : container(container) {}
 
-    using value_type = typename Container::value_type;
-
     inline signed_size_t size() const {
         return std::size(container);
     };
 
-    template <typename Fn>
-    using invoke_result_t = redundant_invoke_result_t<Fn, value_type>;
-    template <typename Fn, typename Iterator>
-    inline auto invoke(Fn&& fn, Iterator it) {
-        return redundant_invoke(fn, *it);
-    }
-
     inline void reserve(std::size_t) {}
 
+    static constexpr bool subscriptable = false;
+
+    using value_type = typename Container::value_type;
     template <typename Iterator>
-    inline auto get_value(Iterator it) const {
+    inline value_type get_value(Iterator it) const {
         return *it;
     }
     template <typename Iterator, typename Value, std::enable_if_t<true_v<Value> && !std::is_const_v<Container>>* = nullptr>
@@ -76,6 +84,13 @@ struct base {
         *it = std::forward<Value>(val);
     }
     static constexpr bool value_settable = !std::is_const_v<Container>;
+
+    template <typename Fn>
+    using invoke_result_t = container_invoke_result_t<Fn, value_type>;
+    template <typename Fn, typename Iterator>
+    inline auto invoke(Fn&& fn, Iterator it) {
+        return container_invoke(fn, *it);
+    }
 
     template <typename PositionIterator, typename Value, std::enable_if_t<true_v<Value> && !std::is_const_v<Container>>* = nullptr>
     inline void insert(PositionIterator, Value&& val) {
@@ -88,14 +103,20 @@ template <typename RandomAccessContainer>
 struct random_access : base<RandomAccessContainer> {
     using base<RandomAccessContainer>::base;
 
+    static constexpr bool subscriptable = true;
     using key_type = signed_size_t;
+    template <typename Iterator>
+    inline key_type get_key(Iterator it) const {
+        return it - std::begin(this->container);
+    }
+
     using typename base<RandomAccessContainer>::value_type;
 
     template <typename Fn>
-    using invoke_result_t = redundant_invoke_result_t<Fn, value_type, key_type>;
+    using invoke_result_t = container_invoke_result_t<Fn, value_type, key_type>;
     template <typename Fn, typename Iterator>
     inline auto invoke(Fn&& fn, Iterator it) {
-        return redundant_invoke(fn, *it, static_cast<signed_size_t>(it - std::begin(this->container)));
+        return container_invoke(fn, *it, static_cast<signed_size_t>(it - std::begin(this->container)));
     }
 };
 
@@ -115,23 +136,28 @@ template <typename Map>
 struct map : base<Map> {
     using base<Map>::base;
 
+    static constexpr bool subscriptable = true;
     using key_type = typename Map::key_type;
-    using value_type = typename Map::mapped_type;
-
-    template <typename Fn>
-    using invoke_result_t = redundant_invoke_result_t<Fn, value_type, key_type>;
-    template <typename Fn, typename Iterator>
-    inline auto invoke(Fn&& fn, Iterator it) {
-        return redundant_invoke(fn, it->second, it->first);
+    template <typename Iterator>
+    inline key_type get_key(Iterator it) const {
+        return it->first;
     }
 
+    using value_type = typename Map::mapped_type;
     template <typename Iterator>
-    inline auto get_value(Iterator it) const {
+    inline value_type get_value(Iterator it) const {
         return it->second;
     }
     template <typename Iterator, typename Value, std::enable_if_t<true_v<Value> && !std::is_const_v<Map>>* = nullptr>
     inline void set_value(Iterator it, Value&& val) {
         it->second = std::forward<Value>(val);
+    }
+
+    template <typename Fn>
+    using invoke_result_t = container_invoke_result_t<Fn, value_type, key_type>;
+    template <typename Fn, typename Iterator>
+    inline auto invoke(Fn&& fn, Iterator it) {
+        return container_invoke(fn, it->second, it->first);
     }
 
     template <typename PositionIterator, typename Value, std::enable_if_t<true_v<Value> && !std::is_const_v<Map>>* = nullptr>
@@ -173,14 +199,14 @@ struct container_helper<std::basic_string<charT, traits, Allocator>> : container
     using container_helper_base::random_access<std::basic_string<charT, traits, Allocator>>::random_access;
 
     template <typename U>
-    using change_value_type = typename std::vector<U>;
+    using change_value_type = typename std::conditional_t<std::is_same_v<U, charT>, std::basic_string<charT>, std::vector<U>>;
 };
 template <class charT, class traits, class Allocator>
 struct container_helper<const std::basic_string<charT, traits, Allocator>> : container_helper_base::random_access<const std::basic_string<charT, traits, Allocator>> {
     using container_helper_base::random_access<const std::basic_string<charT, traits, Allocator>>::random_access;
 
     template <typename U>
-    using change_value_type = typename std::vector<U>;
+    using change_value_type = typename std::conditional_t<std::is_same_v<U, charT>, std::basic_string<charT>, std::vector<U>>;
 };
 
 template <class T, std::size_t N>
@@ -501,6 +527,21 @@ inline auto ranked(Container&& container, KeyFunction&& fn) {
         [&keys, &temp, &i]() -> _internal::signed_size_t {
             return std::lower_bound(keys.begin(), keys.end(), temp[i++]) - keys.begin();
         });
+}
+
+template <class Container>
+inline auto inversed(Container&& container) {
+    _internal::container_helper helper(container);
+    static_assert(decltype(helper)::subscriptable, "given container is not subscriptable");
+    using K = typename decltype(helper)::key_type;
+    using V = typename decltype(helper)::value_type;
+
+    using ResultType = typename _internal::container_selector<V>::template map<K>;
+    ResultType res;
+    for (auto it = std::begin(container); it != std::end(container); ++it) {
+        res[helper.get_value(it)] = helper.get_key(it);
+    }
+    return res;
 }
 
 }  // namespace mihatsu
