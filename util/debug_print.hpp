@@ -46,16 +46,16 @@ struct DebugPrinter {
 
     template <typename T>
     inline void print_value(const T& x) {
-        if constexpr (std::is_convertible_v<T*, std::string*>) {
+        if constexpr (std::is_base_of_v<std::string, T>) {
             os << x;
-        } else if constexpr (is_maplike_v<T> || is_setlike_v<T> || is_container_v<T>) {
+        } else if constexpr (is_maplike_v<T> || is_setlike_v<T> || is_container_v<T> || std::is_array_v<T>) {
             if constexpr (is_maplike_v<T> || is_setlike_v<T>) {
                 os << "{";
             } else {
                 os << "[";
             }
             bool is_first = true;
-            for (const auto& value : x) {
+            for (auto&& value : x) {
                 os << (is_first ? "" : " ");
                 is_first = false;
                 if constexpr (is_maplike_v<T>) {
@@ -83,6 +83,9 @@ struct DebugPrinter {
     }
     inline void print_value(const char* str) {
         os << str;
+    }
+    inline void print_value(bool val) {
+        os << (val ? "true" : "false");
     }
     template <typename... T>
     inline void print_value(const std::tuple<T...>& tuple) {
