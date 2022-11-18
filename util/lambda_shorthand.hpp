@@ -67,46 +67,9 @@ using constant_t = typename constant_t_impl<T>::type;
 template <std::size_t ID>
 struct variable : variable_base_wrapper<ID> {
     template <typename... Args, std::enable_if_t<sizeof...(Args) >= variable_base_wrapper<ID>::minimum_argument_length>* = nullptr>
-    constexpr inline auto operator()(const Args&... args) const -> decltype(std::get<ID>(std::make_tuple(args...))) {
+    constexpr inline auto operator()(const Args&... args) const {
         return std::get<ID>(std::make_tuple(args...));
     }
-
-    struct : variable_base_wrapper<ID> {
-        template <typename... Args, std::enable_if_t<sizeof...(Args) >= variable_base_wrapper<ID>::minimum_argument_length>* = nullptr>
-        constexpr inline auto operator()(const Args&... args) const -> decltype(std::get<ID>(std::make_tuple(args...)).first) {
-            return std::get<ID>(std::make_tuple(args...)).first;
-        }
-        struct : variable_base_wrapper<ID> {
-            template <typename... Args, std::enable_if_t<sizeof...(Args) >= variable_base_wrapper<ID>::minimum_argument_length>* = nullptr>
-            constexpr inline auto operator()(const Args&... args) const -> decltype(std::get<ID>(std::make_tuple(args...)).first.first) {
-                return std::get<ID>(std::make_tuple(args...)).first.first;
-            }
-        } first;
-        struct : variable_base_wrapper<ID> {
-            template <typename... Args, std::enable_if_t<sizeof...(Args) >= variable_base_wrapper<ID>::minimum_argument_length>* = nullptr>
-            constexpr inline auto operator()(const Args&... args) const -> decltype(std::get<ID>(std::make_tuple(args...)).first.second) {
-                return std::get<ID>(std::make_tuple(args...)).first.second;
-            }
-        } second;
-    } first;
-    struct : variable_base_wrapper<ID> {
-        template <typename... Args, std::enable_if_t<sizeof...(Args) >= variable_base_wrapper<ID>::minimum_argument_length>* = nullptr>
-        constexpr inline auto operator()(const Args&... args) const -> decltype(std::get<ID>(std::make_tuple(args...)).second) {
-            return std::get<ID>(std::make_tuple(args...)).second;
-        }
-        struct : variable_base_wrapper<ID> {
-            template <typename... Args, std::enable_if_t<sizeof...(Args) >= variable_base_wrapper<ID>::minimum_argument_length>* = nullptr>
-            constexpr inline auto operator()(const Args&... args) const -> decltype(std::get<ID>(std::make_tuple(args...)).second.first) {
-                return std::get<ID>(std::make_tuple(args...)).second.first;
-            }
-        } first;
-        struct : variable_base_wrapper<ID> {
-            template <typename... Args, std::enable_if_t<sizeof...(Args) >= variable_base_wrapper<ID>::minimum_argument_length>* = nullptr>
-            constexpr inline auto operator()(const Args&... args) const -> decltype(std::get<ID>(std::make_tuple(args...)).second.second) {
-                return std::get<ID>(std::make_tuple(args...)).second.second;
-            }
-        } second;
-    } second;
 };
 
 // ---- operators ----
@@ -233,11 +196,67 @@ _MIHATSU_DEF_EXPR_OP2(pair, operator _MIHATSU_COMMA)
 #undef _MIHATSU_DEF_EXPR2
 #undef _MIHATSU_DEF_EXPR_OP2
 
+// ---- property access ----
+
+template <typename Expr>
+struct property_accesser : base_wrapper<Expr> {
+    Expr expr;
+    constexpr inline property_accesser(const Expr& expr)
+        : expr(expr) {}
+    template <typename... Args, std::enable_if_t<sizeof...(Args) >= base_wrapper<Expr>::minimum_argument_length>* = nullptr>
+    constexpr inline auto operator()(const Args&... args) const -> decltype(expr(args...)) {
+        return expr(args...);
+    }
+
+    struct : base_wrapper<Expr> {
+        Expr expr;
+        template <typename... Args, std::enable_if_t<sizeof...(Args) >= base_wrapper<Expr>::minimum_argument_length>* = nullptr>
+        constexpr inline auto operator()(const Args&... args) const -> decltype(expr(args...).first) {
+            return expr(args...).first;
+        }
+        struct : base_wrapper<Expr> {
+            Expr expr;
+            template <typename... Args, std::enable_if_t<sizeof...(Args) >= base_wrapper<Expr>::minimum_argument_length>* = nullptr>
+            constexpr inline auto operator()(const Args&... args) const -> decltype(expr(args...).first.first) {
+                return expr(args...).first.first;
+            }
+        } first{expr};
+        struct : base_wrapper<Expr> {
+            Expr expr;
+            template <typename... Args, std::enable_if_t<sizeof...(Args) >= base_wrapper<Expr>::minimum_argument_length>* = nullptr>
+            constexpr inline auto operator()(const Args&... args) const -> decltype(expr(args...).first.second) {
+                return expr(args...).first.second;
+            }
+        } second{expr};
+    } first{expr};
+    struct : base_wrapper<Expr> {
+        Expr expr;
+        template <typename... Args, std::enable_if_t<sizeof...(Args) >= base_wrapper<Expr>::minimum_argument_length>* = nullptr>
+        constexpr inline auto operator()(const Args&... args) const -> decltype(expr(args...).second) {
+            return expr(args...).second;
+        }
+        struct : base_wrapper<Expr> {
+            Expr expr;
+            template <typename... Args, std::enable_if_t<sizeof...(Args) >= base_wrapper<Expr>::minimum_argument_length>* = nullptr>
+            constexpr inline auto operator()(const Args&... args) const -> decltype(expr(args...).second.first) {
+                return expr(args...).second.first;
+            }
+        } first{expr};
+        struct : base_wrapper<Expr> {
+            Expr expr;
+            template <typename... Args, std::enable_if_t<sizeof...(Args) >= base_wrapper<Expr>::minimum_argument_length>* = nullptr>
+            constexpr inline auto operator()(const Args&... args) const -> decltype(expr(args...).second.second) {
+                return expr(args...).second.second;
+            }
+        } second{expr};
+    } second{expr};
+};
+
 }  // namespace expression
 
 template <std::size_t VariableID = 0>
 constexpr inline auto make_variable() {
-    return expression::variable<VariableID>();
+    return expression::property_accesser(expression::variable<VariableID>());
 }
 
 template <typename T>
