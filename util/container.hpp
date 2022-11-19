@@ -60,10 +60,16 @@ struct {
 template <typename Fn, class First, class... Args>
 using container_invoke_result_t = typename std::invoke_result_t<decltype(container_invoke), Fn, First, Args...>;
 
-template <typename Container>
+template <typename Container, bool is_const>
 struct base {
-    Container& container;
-    inline base(Container& container)
+    static_assert(!std::is_const_v<Container>, "parameter 'Container' cannot be const (use is_const=true instead)");
+
+   protected:
+    using _Container = typename std::conditional_t<is_const, const Container, Container>;
+
+   public:
+    _Container& container;
+    inline base(_Container& container)
         : container(container) {}
 
     inline signed_size_t size() const {
@@ -74,16 +80,18 @@ struct base {
 
     static constexpr bool subscriptable = false;
 
-    using value_type = typename Container::value_type;
+    using value_type = typename _Container::value_type;
     template <typename Iterator>
     inline value_type get_value(Iterator it) const {
         return *it;
     }
-    template <typename Iterator, typename Value, std::enable_if_t<true_v<Value> && !std::is_const_v<Container>>* = nullptr>
+    template <typename Iterator, typename Value, std::enable_if_t<true_v<Value> && !is_const>* = nullptr>
     inline void set_value(Iterator it, Value&& val) {
         *it = std::forward<Value>(val);
     }
-    static constexpr bool value_settable = !std::is_const_v<Container>;
+    static constexpr bool value_settable = !is_const;
+
+    using iterated_type = typename std::remove_reference_t<decltype(*std::begin(container))>;
 
     template <typename Fn>
     using invoke_result_t = container_invoke_result_t<Fn, value_type>;
@@ -92,16 +100,19 @@ struct base {
         return container_invoke(fn, *it);
     }
 
-    template <typename PositionIterator, typename Value, std::enable_if_t<true_v<Value> && !std::is_const_v<Container>>* = nullptr>
+    template <typename PositionIterator, typename Value, std::enable_if_t<true_v<Value> && !is_const>* = nullptr>
     inline void insert(PositionIterator, Value&& val) {
         // PositionIterator is not read except for map
         container.push_back(std::forward<Value>(val));
     }
+
+    template <typename U>
+    using change_value_type = typename std::vector<U>;
 };
 
-template <typename RandomAccessContainer>
-struct random_access : base<RandomAccessContainer> {
-    using base<RandomAccessContainer>::base;
+template <typename RandomAccessContainer, bool is_const>
+struct random_access : base<RandomAccessContainer, is_const> {
+    using base<RandomAccessContainer, is_const>::base;
 
     static constexpr bool subscriptable = true;
     using key_type = signed_size_t;
@@ -110,7 +121,7 @@ struct random_access : base<RandomAccessContainer> {
         return it - std::begin(this->container);
     }
 
-    using typename base<RandomAccessContainer>::value_type;
+    using typename base<RandomAccessContainer, is_const>::value_type;
 
     template <typename Fn>
     using invoke_result_t = container_invoke_result_t<Fn, value_type, key_type>;
@@ -120,21 +131,21 @@ struct random_access : base<RandomAccessContainer> {
     }
 };
 
-template <typename Set>
-struct set : base<Set> {
-    using base<Set>::base;
+template <typename Set, bool is_const>
+struct set : base<Set, is_const> {
+    using base<Set, is_const>::base;
 
     static constexpr bool value_settable = false;
 
-    template <typename PositionIterator, typename Value, std::enable_if_t<true_v<Value> && !std::is_const_v<Set>>* = nullptr>
+    template <typename PositionIterator, typename Value, std::enable_if_t<true_v<Value> && !is_const>* = nullptr>
     inline void insert(PositionIterator, Value&& val) {
         this->container.insert(std::forward<Value>(val));
     }
 };
 
-template <typename Map>
-struct map : base<Map> {
-    using base<Map>::base;
+template <typename Map, bool is_const>
+struct map : base<Map, is_const> {
+    using base<Map, is_const>::base;
 
     static constexpr bool subscriptable = true;
     using key_type = typename Map::key_type;
@@ -148,7 +159,7 @@ struct map : base<Map> {
     inline value_type get_value(Iterator it) const {
         return it->second;
     }
-    template <typename Iterator, typename Value, std::enable_if_t<true_v<Value> && !std::is_const_v<Map>>* = nullptr>
+    template <typename Iterator, typename Value, std::enable_if_t<true_v<Value> && !is_const>* = nullptr>
     inline void set_value(Iterator it, Value&& val) {
         it->second = std::forward<Value>(val);
     }
@@ -160,7 +171,7 @@ struct map : base<Map> {
         return container_invoke(fn, it->second, it->first);
     }
 
-    template <typename PositionIterator, typename Value, std::enable_if_t<true_v<Value> && !std::is_const_v<Map>>* = nullptr>
+    template <typename PositionIterator, typename Value, std::enable_if_t<true_v<Value> && !is_const>* = nullptr>
     inline void insert(PositionIterator pos, Value&& val) {
         this->container.emplace(pos->first, std::forward<Value>(val));
     }
@@ -168,50 +179,41 @@ struct map : base<Map> {
 
 }  // namespace container_helper_base
 
-template <typename Container>
-struct container_helper : container_helper_base::base<Container> {
-    using container_helper_base::base<Container>::base;
+template <typename Container, bool is_const>
+struct container_helper : container_helper_base::base<Container, is_const> {
+    using container_helper_base::base<Container, is_const>::base;
 };
 template <typename Container>
-container_helper(Container&) -> container_helper<Container>;
+container_helper(Container&) -> container_helper<Container, false>;
+template <typename Container>
+container_helper(const Container&) -> container_helper<Container, true>;
 
-template <class T, class Allocator>
-struct container_helper<std::vector<T, Allocator>> : container_helper_base::random_access<std::vector<T, Allocator>> {
-    using container_helper_base::random_access<std::vector<T, Allocator>>::random_access;
+template <class T, class Allocator, bool is_const>
+struct container_helper<std::vector<T, Allocator>, is_const> : container_helper_base::random_access<std::vector<T, Allocator>, is_const> {
+    using container_helper_base::random_access<std::vector<T, Allocator>, is_const>::random_access;
 
     inline void reserve(std::size_t n) {
         this->container.reserve(n);
     }
 
-    template <typename U>
-    using change_value_type = typename std::vector<U>;
-};
-template <class T, class Allocator>
-struct container_helper<const std::vector<T, Allocator>> : container_helper_base::random_access<const std::vector<T, Allocator>> {
-    using container_helper_base::random_access<const std::vector<T, Allocator>>::random_access;
-
-    template <typename U>
-    using change_value_type = typename std::vector<U>;
+    using iterated_type = T;
 };
 
-template <class charT, class traits, class Allocator>
-struct container_helper<std::basic_string<charT, traits, Allocator>> : container_helper_base::random_access<std::basic_string<charT, traits, Allocator>> {
-    using container_helper_base::random_access<std::basic_string<charT, traits, Allocator>>::random_access;
+template <class charT, class traits, class Allocator, bool is_const>
+struct container_helper<std::basic_string<charT, traits, Allocator>, is_const> : container_helper_base::random_access<std::basic_string<charT, traits, Allocator>, is_const> {
+    using container_helper_base::random_access<std::basic_string<charT, traits, Allocator>, is_const>::random_access;
 
-    template <typename U>
-    using change_value_type = typename std::conditional_t<std::is_same_v<U, charT>, std::basic_string<charT>, std::vector<U>>;
-};
-template <class charT, class traits, class Allocator>
-struct container_helper<const std::basic_string<charT, traits, Allocator>> : container_helper_base::random_access<const std::basic_string<charT, traits, Allocator>> {
-    using container_helper_base::random_access<const std::basic_string<charT, traits, Allocator>>::random_access;
+    using iterated_type = charT;
 
     template <typename U>
     using change_value_type = typename std::conditional_t<std::is_same_v<U, charT>, std::basic_string<charT>, std::vector<U>>;
 };
 
-template <class T, std::size_t N>
-struct container_helper<std::array<T, N>> : container_helper_base::random_access<std::array<T, N>> {
-    using container_helper_base::random_access<std::array<T, N>>::random_access;
+template <class T, std::size_t N, bool is_const>
+struct container_helper<std::array<T, N>, is_const> : container_helper_base::random_access<std::array<T, N>, is_const> {
+    using container_helper_base::random_access<std::array<T, N>, is_const>::random_access;
+
+    using iterated_type = T;
 
     std::size_t insertion_index = 0;
     template <typename PositionIterator, typename Value>
@@ -222,52 +224,38 @@ struct container_helper<std::array<T, N>> : container_helper_base::random_access
     template <typename U>
     using change_value_type = typename std::array<U, N>;
 };
-template <class T, std::size_t N>
-struct container_helper<const std::array<T, N>> : container_helper_base::random_access<const std::array<T, N>> {
-    using container_helper_base::random_access<const std::array<T, N>>::random_access;
 
-    template <typename U>
-    using change_value_type = typename std::array<U, N>;
-};
+template <class T, class Allocator, bool is_const>
+struct container_helper<std::deque<T, Allocator>, is_const> : container_helper_base::random_access<std::deque<T, Allocator>, is_const> {
+    using container_helper_base::random_access<std::deque<T, Allocator>, is_const>::random_access;
 
-template <class T, class Allocator>
-struct container_helper<std::deque<T, Allocator>> : container_helper_base::random_access<std::deque<T, Allocator>> {
-    using container_helper_base::random_access<std::deque<T, Allocator>>::random_access;
-
-    template <typename U>
-    using change_value_type = typename std::deque<U>;
-};
-template <class T, class Allocator>
-struct container_helper<const std::deque<T, Allocator>> : container_helper_base::random_access<const std::deque<T, Allocator>> {
-    using container_helper_base::random_access<const std::deque<T, Allocator>>::random_access;
+    using iterated_type = T;
 
     template <typename U>
     using change_value_type = typename std::deque<U>;
 };
 
-template <class T, class Allocator>
-struct container_helper<std::list<T, Allocator>> : container_helper_base::base<std::list<T, Allocator>> {
-    using container_helper_base::base<std::list<T, Allocator>>::base;
+template <class T, class Allocator, bool is_const>
+struct container_helper<std::list<T, Allocator>, is_const> : container_helper_base::base<std::list<T, Allocator>, is_const> {
+    using container_helper_base::base<std::list<T, Allocator>, is_const>::base;
 
-    template <typename U>
-    using change_value_type = typename std::list<U>;
-};
-template <class T, class Allocator>
-struct container_helper<const std::list<T, Allocator>> : container_helper_base::base<const std::list<T, Allocator>> {
-    using container_helper_base::base<const std::list<T, Allocator>>::base;
+    using iterated_type = T;
 
     template <typename U>
     using change_value_type = typename std::list<U>;
 };
 
 template <class T, class Allocator>
-struct container_helper<std::forward_list<T, Allocator>> : container_helper_base::base<std::forward_list<T, Allocator>> {
-    using List = std::forward_list<T, Allocator>;
-
+struct container_helper<std::forward_list<T, Allocator>, false> : container_helper_base::base<std::forward_list<T, Allocator>, false> {
+   protected:
+    using List = typename std::forward_list<T, Allocator>;
     typename List::iterator inserting_iterator;
 
+   public:
     inline container_helper(List& list)
-        : container_helper_base::base<List>{list}, inserting_iterator(list.before_begin()) {}
+        : container_helper_base::base<List, false>{list}, inserting_iterator(list.before_begin()) {}
+
+    using iterated_type = T;
 
     inline signed_size_t size() const {
         return -1;
@@ -283,8 +271,10 @@ struct container_helper<std::forward_list<T, Allocator>> : container_helper_base
     using change_value_type = typename std::forward_list<U>;
 };
 template <class T, class Allocator>
-struct container_helper<const std::forward_list<T, Allocator>> : container_helper_base::base<const std::forward_list<T, Allocator>> {
-    using container_helper_base::base<const std::forward_list<T, Allocator>>::base;
+struct container_helper<std::forward_list<T, Allocator>, true> : container_helper_base::base<std::forward_list<T, Allocator>, true> {
+    using container_helper_base::base<std::forward_list<T, Allocator>, true>::base;
+
+    using iterated_type = T;
 
     inline signed_size_t size() const {
         return -1;
@@ -294,121 +284,81 @@ struct container_helper<const std::forward_list<T, Allocator>> : container_helpe
     using change_value_type = typename std::forward_list<U>;
 };
 
-template <class T, class Compare, class Allocator>
-struct container_helper<std::set<T, Compare, Allocator>> : container_helper_base::set<std::set<T, Compare, Allocator>> {
-    using container_helper_base::set<std::set<T, Compare, Allocator>>::set;
+template <class T, class Compare, class Allocator, bool is_const>
+struct container_helper<std::set<T, Compare, Allocator>, is_const> : container_helper_base::set<std::set<T, Compare, Allocator>, is_const> {
+    using container_helper_base::set<std::set<T, Compare, Allocator>, is_const>::set;
 
-    template <typename U>
-    using change_value_type = typename container_selector<U>::set;
-};
-template <class T, class Compare, class Allocator>
-struct container_helper<const std::set<T, Compare, Allocator>> : container_helper_base::set<const std::set<T, Compare, Allocator>> {
-    using container_helper_base::set<const std::set<T, Compare, Allocator>>::set;
+    using iterated_type = T;
 
     template <typename U>
     using change_value_type = typename container_selector<U>::set;
 };
 
-template <class T, class Compare, class Allocator>
-struct container_helper<std::multiset<T, Compare, Allocator>> : container_helper_base::set<std::multiset<T, Compare, Allocator>> {
-    using container_helper_base::set<std::multiset<T, Compare, Allocator>>::set;
+template <class T, class Compare, class Allocator, bool is_const>
+struct container_helper<std::multiset<T, Compare, Allocator>, is_const> : container_helper_base::set<std::multiset<T, Compare, Allocator>, is_const> {
+    using container_helper_base::set<std::multiset<T, Compare, Allocator>, is_const>::set;
 
-    template <typename U>
-    using change_value_type = typename container_selector<U>::multiset;
-};
-template <class T, class Compare, class Allocator>
-struct container_helper<const std::multiset<T, Compare, Allocator>> : container_helper_base::set<const std::multiset<T, Compare, Allocator>> {
-    using container_helper_base::set<const std::multiset<T, Compare, Allocator>>::set;
+    using iterated_type = T;
 
     template <typename U>
     using change_value_type = typename container_selector<U>::multiset;
 };
 
-template <class Key, class Hash, class Pred, class Allocator>
-struct container_helper<std::unordered_set<Key, Hash, Pred, Allocator>> : container_helper_base::set<std::unordered_set<Key, Hash, Pred, Allocator>> {
-    using container_helper_base::set<std::unordered_set<Key, Hash, Pred, Allocator>>::set;
+template <class Key, class Hash, class Pred, class Allocator, bool is_const>
+struct container_helper<std::unordered_set<Key, Hash, Pred, Allocator>, is_const> : container_helper_base::set<std::unordered_set<Key, Hash, Pred, Allocator>, is_const> {
+    using container_helper_base::set<std::unordered_set<Key, Hash, Pred, Allocator>, is_const>::set;
 
-    template <typename U>
-    using change_value_type = typename container_selector<U>::set;
-};
-template <class Key, class Hash, class Pred, class Allocator>
-struct container_helper<const std::unordered_set<Key, Hash, Pred, Allocator>> : container_helper_base::set<const std::unordered_set<Key, Hash, Pred, Allocator>> {
-    using container_helper_base::set<const std::unordered_set<Key, Hash, Pred, Allocator>>::set;
+    using iterated_type = Key;
 
     template <typename U>
     using change_value_type = typename container_selector<U>::set;
 };
 
-template <class Key, class Hash, class Pred, class Allocator>
-struct container_helper<std::unordered_multiset<Key, Hash, Pred, Allocator>> : container_helper_base::set<std::unordered_multiset<Key, Hash, Pred, Allocator>> {
-    using container_helper_base::set<std::unordered_multiset<Key, Hash, Pred, Allocator>>::set;
+template <class Key, class Hash, class Pred, class Allocator, bool is_const>
+struct container_helper<std::unordered_multiset<Key, Hash, Pred, Allocator>, is_const> : container_helper_base::set<std::unordered_multiset<Key, Hash, Pred, Allocator>, is_const> {
+    using container_helper_base::set<std::unordered_multiset<Key, Hash, Pred, Allocator>, is_const>::set;
 
-    template <typename U>
-    using change_value_type = typename container_selector<U>::multiset;
-};
-template <class Key, class Hash, class Pred, class Allocator>
-struct container_helper<const std::unordered_multiset<Key, Hash, Pred, Allocator>> : container_helper_base::set<const std::unordered_multiset<Key, Hash, Pred, Allocator>> {
-    using container_helper_base::set<const std::unordered_multiset<Key, Hash, Pred, Allocator>>::set;
+    using iterated_type = Key;
 
     template <typename U>
     using change_value_type = typename container_selector<U>::multiset;
 };
 
-template <class Key, class T, class Compare, class Allocator>
-struct container_helper<std::map<Key, T, Compare, Allocator>> : container_helper_base::map<std::map<Key, T, Compare, Allocator>> {
-    using container_helper_base::map<std::map<Key, T, Compare, Allocator>>::map;
+template <class Key, class T, class Compare, class Allocator, bool is_const>
+struct container_helper<std::map<Key, T, Compare, Allocator>, is_const> : container_helper_base::map<std::map<Key, T, Compare, Allocator>, is_const> {
+    using container_helper_base::map<std::map<Key, T, Compare, Allocator>, is_const>::map;
 
-    template <typename U>
-    using change_value_type = typename std::map<Key, U, Compare>;
-};
-template <class Key, class T, class Compare, class Allocator>
-struct container_helper<const std::map<Key, T, Compare, Allocator>> : container_helper_base::map<const std::map<Key, T, Compare, Allocator>> {
-    using container_helper_base::map<const std::map<Key, T, Compare, Allocator>>::map;
+    using iterated_type = std::pair<Key, T>;
 
     template <typename U>
     using change_value_type = typename std::map<Key, U, Compare>;
 };
 
-template <class Key, class T, class Compare, class Allocator>
-struct container_helper<std::multimap<Key, T, Compare, Allocator>> : container_helper_base::map<std::multimap<Key, T, Compare, Allocator>> {
-    using container_helper_base::map<std::multimap<Key, T, Compare, Allocator>>::map;
+template <class Key, class T, class Compare, class Allocator, bool is_const>
+struct container_helper<std::multimap<Key, T, Compare, Allocator>, is_const> : container_helper_base::map<std::multimap<Key, T, Compare, Allocator>, is_const> {
+    using container_helper_base::map<std::multimap<Key, T, Compare, Allocator>, is_const>::map;
 
-    template <typename U>
-    using change_value_type = typename std::multimap<Key, U, Compare>;
-};
-template <class Key, class T, class Compare, class Allocator>
-struct container_helper<const std::multimap<Key, T, Compare, Allocator>> : container_helper_base::map<const std::multimap<Key, T, Compare, Allocator>> {
-    using container_helper_base::map<const std::multimap<Key, T, Compare, Allocator>>::map;
+    using iterated_type = std::pair<Key, T>;
 
     template <typename U>
     using change_value_type = typename std::multimap<Key, U, Compare>;
 };
 
-template <class Key, class T, class Hash, class Pred, class Allocator>
-struct container_helper<std::unordered_map<Key, T, Hash, Pred, Allocator>> : container_helper_base::map<std::unordered_map<Key, T, Hash, Pred, Allocator>> {
-    using container_helper_base::map<std::unordered_map<Key, T, Hash, Pred, Allocator>>::map;
+template <class Key, class T, class Hash, class Pred, class Allocator, bool is_const>
+struct container_helper<std::unordered_map<Key, T, Hash, Pred, Allocator>, is_const> : container_helper_base::map<std::unordered_map<Key, T, Hash, Pred, Allocator>, is_const> {
+    using container_helper_base::map<std::unordered_map<Key, T, Hash, Pred, Allocator>, is_const>::map;
 
-    template <typename U>
-    using change_value_type = typename std::unordered_map<Key, U, Hash, Pred>;
-};
-template <class Key, class T, class Hash, class Pred, class Allocator>
-struct container_helper<const std::unordered_map<Key, T, Hash, Pred, Allocator>> : container_helper_base::map<const std::unordered_map<Key, T, Hash, Pred, Allocator>> {
-    using container_helper_base::map<const std::unordered_map<Key, T, Hash, Pred, Allocator>>::map;
+    using iterated_type = std::pair<Key, T>;
 
     template <typename U>
     using change_value_type = typename std::unordered_map<Key, U, Hash, Pred>;
 };
 
-template <class Key, class T, class Hash, class Pred, class Allocator>
-struct container_helper<std::unordered_multimap<Key, T, Hash, Pred, Allocator>> : container_helper_base::map<std::unordered_multimap<Key, T, Hash, Pred, Allocator>> {
-    using container_helper_base::map<std::unordered_multimap<Key, T, Hash, Pred, Allocator>>::map;
+template <class Key, class T, class Hash, class Pred, class Allocator, bool is_const>
+struct container_helper<std::unordered_multimap<Key, T, Hash, Pred, Allocator>, is_const> : container_helper_base::map<std::unordered_multimap<Key, T, Hash, Pred, Allocator>, is_const> {
+    using container_helper_base::map<std::unordered_multimap<Key, T, Hash, Pred, Allocator>, is_const>::map;
 
-    template <typename U>
-    using change_value_type = typename std::unordered_multimap<Key, U, Hash, Pred>;
-};
-template <class Key, class T, class Hash, class Pred, class Allocator>
-struct container_helper<const std::unordered_multimap<Key, T, Hash, Pred, Allocator>> : container_helper_base::map<const std::unordered_multimap<Key, T, Hash, Pred, Allocator>> {
-    using container_helper_base::map<const std::unordered_multimap<Key, T, Hash, Pred, Allocator>>::map;
+    using iterated_type = std::pair<Key, T>;
 
     template <typename U>
     using change_value_type = typename std::unordered_multimap<Key, U, Hash, Pred>;
@@ -442,18 +392,14 @@ inline auto mapped(Container&& container, MappingFunction&& fn) {
 template <class Container>
 inline auto sorted(Container&& container) {
     _internal::container_helper helper(container);
-    using T = typename decltype(helper)::value_type;
+    using T = typename decltype(helper)::iterated_type;
     using ResultType = std::vector<T>;
 
     if constexpr (std::is_base_of_v<ResultType, Container /* rvalue */> && !std::is_const_v<Container>) {
         std::sort(container.begin(), container.end());
         return container;
     } else {
-        ResultType res;
-        if (helper.size() >= 0) res.reserve(helper.size());
-        for (auto it = std::begin(container); it != std::end(container); ++it) {
-            res.push_back(helper.get_value(it));
-        }
+        ResultType res(std::begin(container), std::end(container));
         std::sort(res.begin(), res.end());
         return res;
     }
@@ -462,25 +408,25 @@ inline auto sorted(Container&& container) {
 template <class Container, typename KeyFunction>
 inline auto sorted(Container&& container, KeyFunction&& fn) {
     _internal::container_helper helper(container);
-    using T = typename decltype(helper)::value_type;
+    using T = typename decltype(helper)::iterated_type;
     using U = typename decltype(helper)::template invoke_result_t<KeyFunction>;
-    using P = std::pair<T, U>;
+    using P = std::pair<decltype(std::begin(container)), U>;
     using ResultType = std::vector<T>;
 
     std::vector<P> temp;
     if (helper.size() >= 0) temp.reserve(helper.size());
     for (auto it = std::begin(container); it != std::end(container); ++it) {
-        temp.emplace_back(helper.get_value(it), helper.invoke(fn, it));
+        temp.emplace_back(it, helper.invoke(fn, it));
     }
     std::sort(temp.begin(), temp.end(), [](const P& lhs, const P& rhs) { return lhs.second < rhs.second; });
 
     if constexpr (std::is_base_of_v<ResultType, Container /* rvalue */> && !std::is_const_v<Container>) {
-        for (std::size_t i = 0; i < container.size(); ++i) container[i] = temp[i].first;
+        for (std::size_t i = 0; i < container.size(); ++i) container[i] = *temp[i].first;
         return container;
     } else {
         ResultType res;
         res.reserve(temp.size());
-        for (auto&& [t, u] : temp) res.push_back(t);
+        for (auto&& [it, u] : temp) res.push_back(*it);
         return res;
     }
 }

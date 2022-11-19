@@ -73,19 +73,21 @@ struct Init {
 inline Init init;
 }  // namespace mihatsu::_internal
 
-// (provisional)
+using namespace std;
+using namespace mihatsu;
+
+// -------- 以下, 仮コード --------
+
 namespace std {
 template <typename T, enable_if_t<mihatsu::_internal::is_pairlike_v<T>>* = nullptr>
 ostream& operator<<(ostream& os, const T& pair) {
     return os << pair.first << " " << pair.second;
 }
 }  // namespace std
+
 namespace mihatsu::_internal {
-template <>
-struct container_helper<stringi> : container_helper<std::string> {
-    using container_helper<std::string>::container_helper;
+template <bool is_const>
+struct container_helper<stringi, is_const> : container_helper<std::string, is_const> {
+    using container_helper<std::string, is_const>::container_helper;
 };
 }  // namespace mihatsu::_internal
-
-using namespace std;
-using namespace mihatsu;
