@@ -490,4 +490,17 @@ inline auto inversed(Container&& container) {
     return res;
 }
 
+template <class Container>
+inline auto tallied(Container&& container) {
+    _internal::container_helper helper(container);
+    using T = typename decltype(helper)::value_type;
+
+    using ResultType = typename _internal::container_selector<T>::template map<_internal::signed_size_t>;
+    ResultType res;
+    for (auto it = std::begin(container); it != std::end(container); ++it) {
+        res[helper.get_value(it)] += 1;
+    }
+    return res;
+}
+
 }  // namespace mihatsu
