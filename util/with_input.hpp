@@ -17,11 +17,16 @@ struct with_input<T, std::enable_if_t<std::is_arithmetic_v<T>>> {
    private:
     T val;
 
+    class input_error : public std::exception {
+        const char* what() const noexcept {
+            return "failed reading std::cin";
+        }
+    };
+
    public:
     inline with_input() {
-        if (!(std::cin >> val)) {
-            throw std::runtime_error("[mihatsu::with_input] failed reading std::cin");
-        }
+        std::cin >> val;
+        if (!std::cin) throw input_error();
     }
     constexpr inline with_input(const T& val) noexcept
         : val(val) {}
@@ -37,11 +42,18 @@ struct with_input<T, std::enable_if_t<std::is_arithmetic_v<T>>> {
 
 template <typename T>
 struct with_input<T, std::enable_if_t<std::is_class_v<T>>> : public T {
+   private:
+    class input_error : public std::exception {
+        const char* what() const noexcept {
+            return "failed reading std::cin";
+        }
+    };
+
+   public:
     using T::T;
     inline with_input() {
-        if (!(std::cin >> *this)) {
-            throw std::runtime_error("[mihatsu::with_input] failed reading std::cin");
-        }
+        std::cin >> *this;
+        if (!std::cin) throw input_error();
     }
     constexpr inline with_input(const T& val) noexcept
         : T{val} {}
