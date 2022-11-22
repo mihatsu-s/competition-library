@@ -65,13 +65,17 @@ struct with_input<T, std::enable_if_t<std::is_class_v<T>>> : public T {
 
 namespace std {
 
-template <typename T>
-struct common_type<mihatsu::with_input<T>, T> {
-    using type = T;
+template <typename T, typename U>
+struct common_type<mihatsu::with_input<T>, U> {
+    using type = typename common_type<T, U>::type;
 };
-template <typename T>
-struct common_type<T, mihatsu::with_input<T>> {
-    using type = T;
+template <typename T, typename U>
+struct common_type<T, mihatsu::with_input<U>> {
+    using type = typename common_type<T, U>::type;
+};
+template <typename T, typename U>
+struct common_type<mihatsu::with_input<T>, mihatsu::with_input<U>> {
+    using type = typename common_type<T, U>::type;
 };
 
 }  // namespace std
