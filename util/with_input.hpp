@@ -46,3 +46,16 @@ struct with_input<T, std::enable_if_t<std::is_class_v<T>>> : public T {
 };
 
 }  // namespace mihatsu
+
+namespace std {
+
+template <typename T>
+struct common_type<mihatsu::with_input<T>, T> {
+    using type = T;
+};
+template <typename T>
+struct common_type<T, mihatsu::with_input<T>> {
+    using type = T;
+};
+
+}  // namespace std
