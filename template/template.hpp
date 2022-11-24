@@ -20,6 +20,7 @@
 
 #include "../container/MultiDimensionalVector.hpp"
 #include "../util/b2e.hpp"
+#include "../util/constructible_string.hpp"
 #include "../util/container.hpp"
 #include "../util/debug_print.hpp"
 #include "../util/general.hpp"
@@ -58,6 +59,10 @@ constexpr inline long double pi = 3.1415926535897932384626L;
 constexpr inline auto X = mihatsu::lambda_shorthand::make_variable<0>();
 constexpr inline auto Y = mihatsu::lambda_shorthand::make_variable<1>();
 
+inline auto operator"" _c(const char* str, std::size_t) {
+    return mihatsu::constructible_string<char>(str);
+}
+
 namespace mihatsu::_internal {
 template <std::nullptr_t = nullptr>
 struct Init {
@@ -86,8 +91,12 @@ ostream& operator<<(ostream& os, const T& pair) {
 }  // namespace std
 
 namespace mihatsu::_internal {
-template <bool is_const>
-struct container_helper<stringi, is_const> : container_helper<std::string, is_const> {
-    using container_helper<std::string, is_const>::container_helper;
+template <class charT, class traits, class Allocator, bool is_const>
+struct container_helper<mihatsu::with_input<std::basic_string<charT, traits, Allocator>>, is_const> : container_helper<std::basic_string<charT, traits, Allocator>, is_const> {
+    using container_helper<std::basic_string<charT, traits, Allocator>, is_const>::container_helper;
+};
+template <class charT, class traits, class Allocator, bool is_const>
+struct container_helper<mihatsu::constructible_string<charT, traits, Allocator>, is_const> : container_helper<std::basic_string<charT, traits, Allocator>, is_const> {
+    using container_helper<std::basic_string<charT, traits, Allocator>, is_const>::container_helper;
 };
 }  // namespace mihatsu::_internal
