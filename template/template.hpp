@@ -24,7 +24,7 @@
 #include "../util/debug_print.hpp"
 #include "../util/general.hpp"
 #include "../util/lambda_shorthand.hpp"
-#include "../util/macro.h"
+#include "../util/macro.hpp"
 #include "../util/tuple.hpp"
 #include "../util/vector.hpp"
 #include "../util/with_input.hpp"
