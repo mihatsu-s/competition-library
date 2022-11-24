@@ -5,12 +5,12 @@
 #include "template.hpp"
 
 #define DEF_SEGTREE(name, T, op, e)                         \
-    namespace __##name {                                    \
+    namespace _##name {                                     \
         inline T _op(T a, T b) { return (op); }             \
         inline T _e() { return (e); }                       \
         using type = typename atcoder::segtree<T, _op, _e>; \
     }                                                       \
-    using name = __##name::type;
+    using name = _##name::type;
 
 #define DEF_LAZYSEGTREE(name, T, op, e, F, mapping, composition)                               \
     namespace name {                                                                           \
