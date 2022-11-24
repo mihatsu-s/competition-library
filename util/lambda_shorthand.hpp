@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <string>
 #include <tuple>
 #include <type_traits>
@@ -26,11 +27,11 @@ struct base_wrapper<T1> : base {
 };
 template <typename T1, typename T2>
 struct base_wrapper<T1, T2> : base {
-    static constexpr std::size_t minimum_argument_length = std::max({T1::minimum_argument_length, T2::minimum_argument_length});
+    static constexpr std::size_t minimum_argument_length = std::max(T1::minimum_argument_length, T2::minimum_argument_length);
 };
 template <typename T1, typename T2, typename T3>
 struct base_wrapper<T1, T2, T3> : base {
-    static constexpr std::size_t minimum_argument_length = std::max({T1::minimum_argument_length, T2::minimum_argument_length, T3::minimum_argument_length});
+    static constexpr std::size_t minimum_argument_length = std::max(T1::minimum_argument_length, std::max(T2::minimum_argument_length, T3::minimum_argument_length));
 };
 template <std::size_t ID>
 struct variable_base_wrapper : base {
@@ -51,12 +52,12 @@ struct constant : base_wrapper<> {
 };
 constant(const char*)->constant<std::string>;
 
-template <typename T, typename = void>
+template <typename T>
 struct constant_t_impl {
     using type = constant<T>;
 };
-template <typename T>
-struct constant_t_impl<T, std::enable_if_t<std::is_convertible_v<T, std::string>>> {
+template <std::size_t N>
+struct constant_t_impl<char[N]> {
     using type = constant<std::string>;
 };
 template <typename T>
@@ -260,8 +261,8 @@ constexpr inline auto make_variable() {
 }
 
 template <typename T>
-constexpr inline auto make_constant(const T& value) {
-    return expression::constant<T>(value);
+constexpr inline auto make_constant(T&& value) {
+    return expression::constant(std::forward<T>(value));
 }
 
 }  // namespace lambda_shorthand
