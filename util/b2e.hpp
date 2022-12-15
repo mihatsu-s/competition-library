@@ -74,8 +74,8 @@ inline int b2e_impl<T, id>::counter = 0;
 template <typename T, int id>
 inline std::unique_ptr<T> b2e_impl<T, id>::ptr;
 
-#define b2e(val) _MIHATSU_B2E(val, begin, end)
-#define e2b(val) _MIHATSU_B2E(val, rbegin, rend)
+#define b2e(...) _MIHATSU_B2E((__VA_ARGS__), begin, end)
+#define e2b(...) _MIHATSU_B2E((__VA_ARGS__), rbegin, rend)
 #define _MIHATSU_B2E(val, begin_name, end_name) _MIHATSU_B2E_IMPL(val, begin_name, end_name, mihatsu::_internal::b2e_impl, std::remove_reference_t<decltype(val)>, __COUNTER__ % MIHATSU_B2E_STORE_SIZE)
 #define _MIHATSU_B2E_IMPL(val, begin_name, end_name, impl, T, id) _MIHATSU_B2E_EXPR(begin_name, val, impl, T, id), _MIHATSU_B2E_EXPR(end_name, val, impl, T, id)
 #define _MIHATSU_B2E_EXPR(name, val, impl, T, id)                                                         \

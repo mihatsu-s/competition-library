@@ -19,12 +19,10 @@
 #endif
 
 #include "../container/MultiDimensionalVector.hpp"
-#include "../util/b2e.hpp"
 #include "../util/constructible_string.hpp"
 #include "../util/container.hpp"
 #include "../util/debug_print.hpp"
 #include "../util/general.hpp"
-#include "../util/lambda_shorthand.hpp"
 #include "../util/macro.hpp"
 #include "../util/tuple.hpp"
 #include "../util/vector.hpp"
@@ -56,8 +54,6 @@ using unpriority_queue = std::priority_queue<T, std::vector<T>, std::greater<T>>
 constexpr inline ll inf = std::numeric_limits<ll>::max() / 4;
 constexpr inline char lf = '\n';
 constexpr inline long double pi = 3.1415926535897932384626L;
-constexpr inline auto X = mihatsu::lambda_shorthand::make_variable<0>();
-constexpr inline auto Y = mihatsu::lambda_shorthand::make_variable<1>();
 
 inline auto operator"" _c(const char* str, std::size_t) {
     return mihatsu::constructible_string<char>(str);
