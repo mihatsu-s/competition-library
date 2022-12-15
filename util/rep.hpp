@@ -69,21 +69,22 @@ constexpr inline decltype(auto) range(T&& x) {
 
 }  // namespace mihatsu::_internal::rep_impl
 
-#define rep(var, ...) MIHATSU_CONDITIONAL(MIHATSU_IS_BLANKETED(var), _MIHATSU_REP_BLANKETED, _MIHATSU_REP)(var, __VA_ARGS__)
+#define rep(var, ...) MIHATSU_CONDITIONAL(MIHATSU_IS_BRACKETED(var), _MIHATSU_REP_BRACKETED, _MIHATSU_REP)(var, __VA_ARGS__)
 #define _MIHATSU_REP(...) MIHATSU_NARGS_SELECTOR(_MIHATSU_REP, __VA_ARGS__)
 #define _MIHATSU_REP2(i, n) \
     if (auto&& _##i##_range = (n); true) _MIHATSU_REP_RANGE(i, mihatsu::_internal::rep_impl::range(_##i##_range))
 #define _MIHATSU_REP3(i, a, b) for (std::common_type_t<decltype(a), decltype(b)> i = (a), _##i##_end = (b); i != _##i##_end; ++i)
 #define _MIHATSU_REP4(i, a, b, c) for (std::common_type_t<decltype(a), decltype(b), decltype(c)> i = (a), _##i##_end = (b), _##i##_step = (c); _##i##_step > 0 ? i < _##i##_end : i > _##i##_end; i += _##i##_step)
-#define _MIHATSU_REP_BLANKETED(vars, ...) _MIHATSU_REP_RANGE(_MIHATSU_REP_BLANKETED_VARS vars, (__VA_ARGS__))
-#define _MIHATSU_REP_BLANKETED_VARS(...) [__VA_ARGS__]
+#define _MIHATSU_REP_BRACKETED(vars, ...) _MIHATSU_REP_RANGE(_MIHATSU_REP_BRACKETED_VARS vars, (__VA_ARGS__))
+#define _MIHATSU_REP_BRACKETED_VARS(...) [__VA_ARGS__]
 #define _MIHATSU_REP_RANGE(var, range) for (auto&& var : range)
 
-#define rep_rev(var, ...) MIHATSU_CONDITIONAL(MIHATSU_IS_BLANKETED(var), _MIHATSU_REPREV_BLANKETED, _MIHATSU_REPREV)(var, __VA_ARGS__)
+#define rep_rev(var, ...) MIHATSU_CONDITIONAL(MIHATSU_IS_BRACKETED(var), _MIHATSU_REPREV_BRACKETED, _MIHATSU_REPREV)(var, __VA_ARGS__)
 #define _MIHATSU_REPREV(...) MIHATSU_NARGS_SELECTOR(_MIHATSU_REPREV, __VA_ARGS__)
-#define _MIHATSU_REPREV2(i, n) _MIHATSU_REPREV_RANGE(__COUNTER__, mihatsu::_internal::rep_impl::range(n), i)
+#define _MIHATSU_REPREV2(i, n) \
+    if (auto&& _##i##_range = (n); true) _MIHATSU_REPREV_RANGE(__COUNTER__, mihatsu::_internal::rep_impl::range(_##i##_range), i)
 #define _MIHATSU_REPREV3(i, a, b) for (std::common_type_t<decltype(a), decltype(b)> i = b - 1, _##i##_end = a - 1; i != _##i##_end; --i)
-#define _MIHATSU_REPREV_BLANKETED(vars, ...) _MIHATSU_REPREV_RANGE(__COUNTER__, (__VA_ARGS__), _MIHATSU_REP_BLANKETED_VARS vars)
+#define _MIHATSU_REPREV_BRACKETED(vars, ...) _MIHATSU_REPREV_RANGE(__COUNTER__, (__VA_ARGS__), _MIHATSU_REP_BRACKETED_VARS vars)
 #define _MIHATSU_REPREV_RANGE(...) _MIHATSU_REPREV_RANGE_IMPL(__VA_ARGS__)
 #define _MIHATSU_REPREV_RANGE_IMPL(id, range, ...)                                      \
     if (auto&& _reprev##id##_range = range; true)                                       \
