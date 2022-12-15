@@ -49,10 +49,10 @@ namespace container_helper_base {
 struct {
     template <typename Fn, class First, class... Args>
     inline auto operator()(Fn&& fn, First&& first, Args&&... args) {
-        if constexpr (is_redundant_invocable_v<Fn, First, Args...>) {
-            return redundant_invoke(std::forward<Fn>(fn), std::forward<First>(first), std::forward<Args>(args)...);
-        } else {
+        if constexpr (is_subscriptable_v<Fn, First>) {
             return std::forward<Fn>(fn)[std::forward<First>(first)];
+        } else {
+            return redundant_invoke(std::forward<Fn>(fn), std::forward<First>(first), std::forward<Args>(args)...);
         }
     }
 } container_invoke;

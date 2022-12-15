@@ -8,12 +8,12 @@ namespace mihatsu::_internal {
 // 仮実装（TODO: 任意引数長に対応する）
 
 struct {
-    template <class Fn, std::enable_if_t<std::is_invocable_v<Fn>>* = nullptr>
+    template <class Fn>
     inline constexpr auto operator()(Fn&& fn) {
         return std::invoke(std::forward<Fn>(fn));
     }
 
-    template <class Fn, class T1, std::enable_if_t<std::is_invocable_v<Fn, T1> || std::is_invocable_v<Fn>>* = nullptr>
+    template <class Fn, class T1>
     inline constexpr auto operator()(Fn&& fn, T1&& t1) {
         if constexpr (std::is_invocable_v<Fn, T1>) {
             return std::invoke(std::forward<Fn>(fn), std::forward<T1>(t1));
@@ -22,7 +22,7 @@ struct {
         }
     }
 
-    template <class Fn, class T1, class T2, std::enable_if_t<std::is_invocable_v<Fn, T1, T2> || std::is_invocable_v<Fn, T1> || std::is_invocable_v<Fn>>* = nullptr>
+    template <class Fn, class T1, class T2>
     inline constexpr auto operator()(Fn&& fn, T1&& t1, T2&& t2) {
         if constexpr (std::is_invocable_v<Fn, T1, T2>) {
             return std::invoke(std::forward<Fn>(fn), std::forward<T1>(t1), std::forward<T2>(t2));
@@ -31,7 +31,7 @@ struct {
         }
     }
 
-    template <class Fn, class T1, class T2, class T3, std::enable_if_t<std::is_invocable_v<Fn, T1, T2, T3> || std::is_invocable_v<Fn, T1, T2> || std::is_invocable_v<Fn, T1> || std::is_invocable_v<Fn>>* = nullptr>
+    template <class Fn, class T1, class T2, class T3>
     inline constexpr auto operator()(Fn&& fn, T1&& t1, T2&& t2, T3&& t3) {
         if constexpr (std::is_invocable_v<Fn, T1, T2, T3>) {
             return std::invoke(std::forward<Fn>(fn), std::forward<T1>(t1), std::forward<T2>(t2), std::forward<T3>(t3));
@@ -40,7 +40,7 @@ struct {
         }
     }
 
-    template <class Fn, class T1, class T2, class T3, class T4, std::enable_if_t<std::is_invocable_v<Fn, T1, T2, T3, T4> || std::is_invocable_v<Fn, T1, T2, T3> || std::is_invocable_v<Fn, T1, T2> || std::is_invocable_v<Fn, T1> || std::is_invocable_v<Fn>>* = nullptr>
+    template <class Fn, class T1, class T2, class T3, class T4>
     inline constexpr auto operator()(Fn&& fn, T1&& t1, T2&& t2, T3&& t3, T4&& t4) {
         if constexpr (std::is_invocable_v<Fn, T1, T2, T3, T4>) {
             return std::invoke(std::forward<Fn>(fn), std::forward<T1>(t1), std::forward<T2>(t2), std::forward<T3>(t3), std::forward<T4>(t4));

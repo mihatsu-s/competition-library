@@ -44,6 +44,18 @@ struct is_pairlike<T, std::void_t<typename T::first_type, typename T::second_typ
 template <typename T>
 constexpr inline bool is_pairlike_v = is_pairlike<T>::value;
 
+struct is_subscriptable_impl {
+    template <class T, class U>
+    constexpr auto operator()(T&& a, U&& b) -> decltype(a[b], std::true_type{}) {
+        return std::true_type{};
+    }
+    constexpr auto operator()(...) -> std::false_type {
+        return std::false_type{};
+    }
+};
+template <class T, class U>
+constexpr inline bool is_subscriptable_v = std::invoke_result_t<is_subscriptable_impl, T, U>::value;
+
 // ---- utilities ----
 
 template <typename T, std::size_t N>
