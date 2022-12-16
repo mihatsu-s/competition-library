@@ -46,7 +46,8 @@ struct container_selector<T, std::void_t<decltype(std::hash<T>())>> {
 
 namespace container_helper_base {
 
-struct {
+template <std::nullptr_t = nullptr>
+struct container_invoke_t {
     template <typename Fn, class First, class... Args>
     inline auto operator()(Fn&& fn, First&& first, Args&&... args) {
         if constexpr (is_subscriptable_v<Fn, First>) {
@@ -55,7 +56,8 @@ struct {
             return redundant_invoke(std::forward<Fn>(fn), std::forward<First>(first), std::forward<Args>(args)...);
         }
     }
-} container_invoke;
+};
+inline container_invoke_t container_invoke;
 
 template <typename Fn, class First, class... Args>
 using container_invoke_result_t = typename std::invoke_result_t<decltype(container_invoke), Fn, First, Args...>;
