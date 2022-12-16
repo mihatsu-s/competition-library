@@ -36,25 +36,25 @@ constexpr inline auto operator/(const T& lhs, const U& rhs) {
     return std::make_pair(lhs.first / rhs, lhs.second / rhs);
 }
 template <typename T, typename U, enable_if_t<mihatsu::_internal::is_pairlike_v<T> && mihatsu::_internal::is_pairlike_v<U>>* = nullptr>
-constexpr inline auto operator+=(T& lhs, const U& rhs) {
+constexpr inline T& operator+=(T& lhs, const U& rhs) {
     lhs.first += rhs.first;
     lhs.second += rhs.second;
     return lhs;
 }
 template <typename T, typename U, enable_if_t<mihatsu::_internal::is_pairlike_v<T> && mihatsu::_internal::is_pairlike_v<U>>* = nullptr>
-constexpr inline auto operator-=(T& lhs, const U& rhs) {
+constexpr inline T& operator-=(T& lhs, const U& rhs) {
     lhs.first -= rhs.first;
     lhs.second -= rhs.second;
     return lhs;
 }
 template <typename T, typename U, enable_if_t<mihatsu::_internal::is_pairlike_v<T>>* = nullptr>
-constexpr inline auto operator*=(T& lhs, const U& rhs) {
+constexpr inline T& operator*=(T& lhs, const U& rhs) {
     lhs.first *= rhs;
     lhs.second *= rhs;
     return lhs;
 }
 template <typename T, typename U, enable_if_t<mihatsu::_internal::is_pairlike_v<T>>* = nullptr>
-constexpr inline auto operator/=(T& lhs, const U& rhs) {
+constexpr inline T& operator/=(T& lhs, const U& rhs) {
     lhs.first /= rhs;
     lhs.second /= rhs;
     return lhs;
