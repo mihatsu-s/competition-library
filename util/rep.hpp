@@ -67,9 +67,27 @@ constexpr inline decltype(auto) range(T&& x) {
     return numeric_range<std::remove_reference_t<T>>(x);
 }
 
+template <std::nullptr_t = nullptr>
+struct breaking_state {
+    static bool flag;
+    static inline void do_break() noexcept {
+        flag = true;
+    }
+    static inline bool check() noexcept {
+        bool res = !flag;
+        flag = false;
+        return res;
+    }
+};
+template <std::nullptr_t _>
+inline bool breaking_state<_>::flag = false;
+
 }  // namespace mihatsu::_internal::rep_impl
 
-#define rep(var, ...) MIHATSU_CONDITIONAL(MIHATSU_IS_BRACKETED(var), _MIHATSU_REP_BRACKETED, _MIHATSU_REP)(var, __VA_ARGS__)
+#define rep(var, ...)                                                                        \
+    if (mihatsu::_internal::rep_impl::breaking_state<>::check())                             \
+        MIHATSU_CONDITIONAL(MIHATSU_IS_BRACKETED(var), _MIHATSU_REP_BRACKETED, _MIHATSU_REP) \
+    (var, __VA_ARGS__)
 #define _MIHATSU_REP(...) MIHATSU_NARGS_SELECTOR(_MIHATSU_REP, __VA_ARGS__)
 #define _MIHATSU_REP2(i, n) \
     if (auto&& _##i##_range = (n); true) _MIHATSU_REP_RANGE(i, mihatsu::_internal::rep_impl::range(_##i##_range))
@@ -79,7 +97,10 @@ constexpr inline decltype(auto) range(T&& x) {
 #define _MIHATSU_REP_BRACKETED_VARS(...) [__VA_ARGS__]
 #define _MIHATSU_REP_RANGE(var, range) for (auto&& var : range)
 
-#define rep_rev(var, ...) MIHATSU_CONDITIONAL(MIHATSU_IS_BRACKETED(var), _MIHATSU_REPREV_BRACKETED, _MIHATSU_REPREV)(var, __VA_ARGS__)
+#define rep_rev(var, ...)                                                                          \
+    if (mihatsu::_internal::rep_impl::breaking_state<>::check())                                   \
+        MIHATSU_CONDITIONAL(MIHATSU_IS_BRACKETED(var), _MIHATSU_REPREV_BRACKETED, _MIHATSU_REPREV) \
+    (var, __VA_ARGS__)
 #define _MIHATSU_REPREV(...) MIHATSU_NARGS_SELECTOR(_MIHATSU_REPREV, __VA_ARGS__)
 #define _MIHATSU_REPREV2(i, n) \
     if (auto&& _##i##_range = (n); true) _MIHATSU_REPREV_RANGE(__COUNTER__, mihatsu::_internal::rep_impl::range(_##i##_range), i)
@@ -92,3 +113,10 @@ constexpr inline decltype(auto) range(T&& x) {
             if (auto _reprev##id##_end = std::rend(_reprev##id##_range); true)          \
                 for (; _reprev##id##_begin != _reprev##id##_end; ++_reprev##id##_begin) \
                     if (auto&& __VA_ARGS__ = *_reprev##id##_begin; true)
+
+#define break(label)                                                \
+    {                                                               \
+        mihatsu::_internal::rep_impl::breaking_state<>::do_break(); \
+        goto label;                                                 \
+    }                                                               \
+    ([]() {}())
