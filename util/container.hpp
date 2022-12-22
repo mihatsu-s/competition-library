@@ -501,4 +501,15 @@ inline auto tallied(Container&& container) {
     return res;
 }
 
+template <class Container, class ConditionFn>
+inline auto filtered(Container&& container, ConditionFn&& fn) {
+    std::remove_const_t<std::remove_reference_t<Container>> res;
+    _internal::container_helper helper(container);
+    _internal::container_helper res_helper(res);
+    for (auto it = std::begin(container); it != std::end(container); ++it) {
+        if (helper.invoke(fn, it)) res_helper.insert(it, helper.get_value(it));
+    }
+    return res;
+}
+
 }  // namespace mihatsu
