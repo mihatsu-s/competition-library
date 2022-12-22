@@ -395,13 +395,12 @@ template <class Container>
 inline auto sorted(Container&& container) {
     _internal::container_helper helper(container);
     using T = typename decltype(helper)::iterated_type;
-    using ResultType = std::vector<T>;
 
-    if constexpr (std::is_base_of_v<ResultType, Container /* rvalue */> && !std::is_const_v<Container>) {
+    if constexpr (std::is_base_of_v<std::vector<T>, Container /* rvalue */> && !std::is_const_v<Container>) {
         std::sort(container.begin(), container.end());
         return container;
     } else {
-        ResultType res(std::begin(container), std::end(container));
+        std::vector<T> res(std::begin(container), std::end(container));
         std::sort(res.begin(), res.end());
         return res;
     }
@@ -413,7 +412,6 @@ inline auto sorted(Container&& container, KeyFunction&& fn) {
     using T = typename decltype(helper)::iterated_type;
     using U = typename decltype(helper)::template invoke_result_t<KeyFunction>;
     using P = std::pair<decltype(std::begin(container)), U>;
-    using ResultType = std::vector<T>;
 
     std::vector<P> temp;
     if (helper.size() >= 0) temp.reserve(helper.size());
@@ -422,11 +420,11 @@ inline auto sorted(Container&& container, KeyFunction&& fn) {
     }
     std::sort(temp.begin(), temp.end(), [](const P& lhs, const P& rhs) { return lhs.second < rhs.second; });
 
-    if constexpr (std::is_base_of_v<ResultType, Container /* rvalue */> && !std::is_const_v<Container>) {
+    if constexpr (std::is_base_of_v<std::vector<T>, Container /* rvalue */> && !std::is_const_v<Container>) {
         for (std::size_t i = 0; i < container.size(); ++i) container[i] = *temp[i].first;
         return container;
     } else {
-        ResultType res;
+        std::vector<T> res;
         res.reserve(temp.size());
         for (auto&& [it, u] : temp) res.push_back(*it);
         return res;
@@ -456,7 +454,7 @@ inline auto ranked(Container&& container) {
 template <class Container, typename KeyFunction>
 inline auto ranked(Container&& container, KeyFunction&& fn) {
     _internal::container_helper helper(container);
-    using T = typename decltype(helper)::value_type;
+    // using T = typename decltype(helper)::value_type;
     using U = typename decltype(helper)::template invoke_result_t<KeyFunction>;
 
     std::vector<U> temp;
@@ -484,8 +482,7 @@ inline auto inversed(Container&& container) {
     using K = typename decltype(helper)::key_type;
     using V = typename decltype(helper)::value_type;
 
-    using ResultType = typename _internal::container_selector<V>::template map<K>;
-    ResultType res;
+    typename _internal::container_selector<V>::template map<K> res;
     for (auto it = std::begin(container); it != std::end(container); ++it) {
         res[helper.get_value(it)] = helper.get_key(it);
     }
@@ -497,8 +494,7 @@ inline auto tallied(Container&& container) {
     _internal::container_helper helper(container);
     using T = typename decltype(helper)::value_type;
 
-    using ResultType = typename _internal::container_selector<T>::template map<_internal::signed_size_t>;
-    ResultType res;
+    typename _internal::container_selector<T>::template map<_internal::signed_size_t> res;
     for (auto it = std::begin(container); it != std::end(container); ++it) {
         res[helper.get_value(it)] += 1;
     }
