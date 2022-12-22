@@ -78,4 +78,12 @@ struct common_type<mihatsu::with_input<T>, mihatsu::with_input<U>> {
     using type = typename common_type<T, U>::type;
 };
 
+template <typename T>
+class hash<mihatsu::with_input<T>> {
+   public:
+    inline size_t operator()(const mihatsu::with_input<T>& val) const {
+        return hash<T>()(val);
+    }
+};
+
 }  // namespace std
